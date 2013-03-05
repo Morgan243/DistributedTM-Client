@@ -2,6 +2,8 @@
 
 using namespace std;
 
+mutex TM_Share:: queue_lock;
+
 TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value)
 {
     this->mem_address = mem_address;

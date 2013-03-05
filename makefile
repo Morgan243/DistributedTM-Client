@@ -9,7 +9,7 @@ OUT=test
 
 
 all : main.o TM_Client.o TM_Share.o $(CLIENT_PATH)NC_Client.o $(CLIENT_PATH)/NetComm.o
-	$(COMP) main.o TM_Client.o TM_Share.o $(CLIENT_PATH)NC_Client.o $(CLIENT_PATH)/NetComm.o -o $(OUT)
+	$(COMP) main.o TM_Client.o TM_Share.o $(CLIENT_PATH)NC_Client.o $(CLIENT_PATH)/NetComm.o $(FLAGS) -o $(OUT)
 
 main.o : main.cpp 
 	$(COMP) -c main.cpp $(FLAGS)

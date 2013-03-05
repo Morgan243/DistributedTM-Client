@@ -4,18 +4,51 @@ using namespace std;
 
 TM_Client::TM_Client() : network()
 {
+//{{{
+    this->done = false;
+    this->auto_sync = true;
 
+    //use default host settings
+    this->network.Init(false, this->host_address, this->port);
+
+    //launch network thread
+    //net_thread = std::thread(&TM_Client::StartNetwork, this);
+//}}}
 }
 
-TM_Client::TM_Client(string host_address, unsigned int port) 
-               : network(host_address, port)
+TM_Client::TM_Client(bool autoSync) : network()
 {
+//{{{
+    this->done = false;
+    this->auto_sync = autoSync;
 
+    //use default host settings
+    this->network.Init(false, this->host_address, this->port);
+
+    //launch network thread
+    //net_thread = std::thread(&TM_Client::StartNetwork, this);
+//}}}
+}
+
+TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt) 
+               : network(hostAddress, prt)
+{
+//{{{
+    this->done = false;
+    this->auto_sync = autoSync;
+
+    this->host_address = hostAddress;
+    this->port = prt;
+
+    //launch network thread
+    //net_thread = std::thread(&TM_Client::StartNetwork, this);
+//}}}
 }
 
 TM_Client::~TM_Client()
 {
-
+    this->done = true;
+    //net_thread.join();
 }
 
 int TM_Client::Register_Transaction(void *(*transaction)(void *), string name)
@@ -114,7 +147,6 @@ void TM_Client::Set_Shared_Memory(int t_id, vector<TM_Share> shared)
 
 }
 
-
 void TM_Client::Add_Shared_Memory(string name, TM_Share shared)
 {
 
@@ -128,4 +160,35 @@ void TM_Client::Add_Shared_Memory(string name, vector<TM_Share> shared)
 void TM_Client::Set_Shared_Memory(string name, vector<TM_Share> shared)
 {
 
+}
+
+void TM_Client::StartNetwork()
+{
+//{{{
+    TM_Message temp_message;
+    int temp_size = 0;
+    while(!done)
+    {
+
+        TM_Share::queue_lock.lock();
+            temp_size = messages.size();
+        TM_Share::queue_lock.unlock();
+
+        if(temp_size)
+        {
+            TM_Share::queue_lock.lock();
+                temp_message = messages.front();
+                messages.pop();
+            TM_Share::queue_lock.unlock();
+
+            //debug statements
+            cout<<"-New TM Message-"<<endl;
+            cout<<"Code: "<<temp_message.code<<endl;
+            cout<<"Data: "<<temp_message.data<<endl;
+            cout<<"Data size: "<<temp_message.data_size<<endl;
+
+            //send data to host
+        }
+    }
+//}}}
 }
