@@ -2,7 +2,21 @@
 
 using namespace std;
 
-TM_Client::TM_Client() : network()
+    bool TM_Client::done;
+    bool TM_Client::auto_sync;
+
+    string TM_Client::host_address = "127.0.0.1";
+    unsigned int TM_Client::port = 1337;
+
+    NC_Client TM_Client::network;
+
+    queue<TM_Message> TM_Client::messages;
+    vector<Transaction> TM_Client::transactions;
+
+    Transaction TM_Client::temp_transaction;
+
+
+TM_Client::TM_Client()// : network()
 {
 //{{{
     this->done = false;
@@ -16,7 +30,7 @@ TM_Client::TM_Client() : network()
 //}}}
 }
 
-TM_Client::TM_Client(bool autoSync) : network()
+TM_Client::TM_Client(bool autoSync) // : network()
 {
 //{{{
     this->done = false;
@@ -31,7 +45,7 @@ TM_Client::TM_Client(bool autoSync) : network()
 }
 
 TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt) 
-               : network(hostAddress, prt)
+              // : network(hostAddress, prt)
 {
 //{{{
     this->done = false;
@@ -160,6 +174,18 @@ void TM_Client::Add_Shared_Memory(string name, vector<TM_Share> shared)
 void TM_Client::Set_Shared_Memory(string name, vector<TM_Share> shared)
 {
 
+}
+
+vector<TM_Share> TM_Client::Get_Shared_Memory(int t_id)
+{
+    return transactions[t_id].shared_memory;
+}
+
+vector<TM_Share> TM_Client::Get_Shared_Memory(string name)
+{
+    int t_id = FindTransaction(name);
+
+    return transactions[t_id].shared_memory;
 }
 
 void TM_Client::StartNetwork()

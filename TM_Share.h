@@ -10,7 +10,8 @@
 //could we wrap an transaction in this, throw an exception in TM_Client
 //Programmers transaction catches it and throws it to execute transaction
 //effectively stopping the function call part way through
-#define BEGIN_T try{
+//#define BEGIN_T try{
+#define BEGIN_T(name) try{ vector<TM_Share> TM = TM_Client::Get_Shared_Memory(name); 
 #define END_T }catch(int error){throw error;}
 
 #ifndef TM_SHARE_H

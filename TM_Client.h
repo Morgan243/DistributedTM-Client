@@ -21,19 +21,19 @@ struct Transaction
 class TM_Client
 {
     private:
-        bool done, auto_sync;
-        std::string host_address = "127.0.0.1";
-        unsigned int port = 1337;
+        static bool done, auto_sync;
+        static std::string host_address;// = "127.0.0.1";
+        static unsigned int port;// = 1337;
 
-        NC_Client network;
-        std::thread net_thread;
-        std::queue<TM_Message> messages;
+        static NC_Client network;
+        static std::thread net_thread;
+        static std::queue<TM_Message> messages;
 
-        std::vector<Transaction> transactions;
-        Transaction temp_transaction;
+        static std::vector<Transaction> transactions;
+        static Transaction temp_transaction;
         
-        void StartNetwork();
-        int FindTransaction(std::string name);
+        static void StartNetwork();
+        static int FindTransaction(std::string name);
         
     public:
          TM_Client();
@@ -41,19 +41,22 @@ class TM_Client
          TM_Client(bool autoSync, std::string host_address, unsigned int port);
         ~TM_Client();
 
-        int Register_Transaction(void *(*transaction)(void *), std::string name);
+        static int Register_Transaction(void *(*transaction)(void *), std::string name);
 
 
-        void*Execute_Transaction(int tran_id, void *arg);
-        void* Execute_Transaction(std::string tran_name, void *arg);
+        static void* Execute_Transaction(int tran_id, void *arg);
+        static void* Execute_Transaction(std::string tran_name, void *arg);
 
-        void Add_Shared_Memory(int t_id, TM_Share shared);
-        void Add_Shared_Memory(int t_id, std::vector<TM_Share> shared);
-        void Set_Shared_Memory(int t_id, std::vector<TM_Share> shared);
+        static void Add_Shared_Memory(int t_id, TM_Share shared);
+        static void Add_Shared_Memory(int t_id, std::vector<TM_Share> shared);
+        static void Set_Shared_Memory(int t_id, std::vector<TM_Share> shared);
 
-        void Add_Shared_Memory(std::string name, TM_Share shared);
-        void Add_Shared_Memory(std::string name, std::vector<TM_Share> shared);
-        void Set_Shared_Memory(std::string name, std::vector<TM_Share> shared);
+        static void Add_Shared_Memory(std::string name, TM_Share shared);
+        static void Add_Shared_Memory(std::string name, std::vector<TM_Share> shared);
+        static void Set_Shared_Memory(std::string name, std::vector<TM_Share> shared);
+
+        static std::vector<TM_Share> Get_Shared_Memory(int t_id);
+        static std::vector<TM_Share> Get_Shared_Memory(std::string name);
 
 };
 
