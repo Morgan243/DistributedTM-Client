@@ -1,21 +1,12 @@
 //#include "../NetComm.git/NC_Client.h"
-#include "TM_Share.h"
+//#include "TM_Share.h"
+#include "Transaction.h"
 
 #include <thread>
 #include <vector>
 #include <queue>
 
-//maybe this should be a class?
-struct Transaction
-{
-    int abort_count = 0;
-    std::string name;
 
-    std::vector<TM_Share> shared_memory;
-
-    //pointer to a function accepts a void pointer and returns a void pointer
-    void *(*transaction)(void *) = NULL;
-};
 
 
 class TM_Client

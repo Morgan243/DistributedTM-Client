@@ -28,6 +28,7 @@ TM_Client::TM_Client()// : network()
 
 
     TM_Share::Register_Network(&network);
+
     //launch network thread
     //net_thread = std::thread(&TM_Client::StartNetwork, this);
 //}}}
@@ -43,6 +44,8 @@ TM_Client::TM_Client(bool autoSync) // : network()
     TM_Client::network.Init(false, this->host_address, this->port);
 
     TM_Share::Register_Network(&network);
+    
+
     //launch network thread
     //net_thread = std::thread(&TM_Client::StartNetwork, this);
 //}}}
@@ -61,6 +64,7 @@ TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt)
     TM_Client::network.Init(false, this->host_address, this->port);
 
     TM_Share::Register_Network(&network);
+
     //launch network thread
     //net_thread = std::thread(&TM_Client::StartNetwork, this);
 //}}}
@@ -117,7 +121,7 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
             wasAborted = true;
 
             //count the aborts
-            transactions[tran_id].abort_count++;
+            transactions[tran_id].Increment_Abort_Count();
         }
     }
     while(wasAborted); //keep trying until it isn't aborted
