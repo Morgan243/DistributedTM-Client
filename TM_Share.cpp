@@ -2,20 +2,21 @@
 
 using namespace std;
 
+NC_Client *TM_Share::network;
 mutex TM_Share:: queue_lock;
 
 TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value)
 {
     this->mem_address = mem_address;
     this->mem_value = mem_value;
-    cout<<"Memory at address "<<this->mem_address<<" registered with value"<< this->mem_value<<endl;
+    cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
 }
 
 TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Message> *messages_ref)
 {
     this->mem_address = mem_address;
     this->mem_value = mem_value;
-    cout<<"Memory at address "<<this->mem_address<<" registered with value"<< this->mem_value<<endl;
+    cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
 
     Register_MessageQueue(messages_ref);
 }
@@ -23,7 +24,13 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Me
 void TM_Share::Register_MessageQueue(queue<TM_Message> *messages_ref)
 {
     this->messages = messages_ref;
-    cout<<"Message Queue registered..."<<endl;
+    cout<<"Message queue registered in shared memory at "<<mem_address<<"..."<<endl;
+}
+
+void TM_Share::Register_Network(NC_Client *net)
+{
+    TM_Share::network = net;
+   cout<<"Network registered..."<<endl;
 }
 
 
@@ -56,5 +63,17 @@ TM_Share & TM_Share::operator=(TM_Share &tm_source)
     this->mem_value = tm_source.mem_value;
     this->TM_Write();
     tm_source.TM_Read();
+}
+
+TM_Share & TM_Share::operator=(const int source)
+{
+    this->mem_value = (unsigned int) source;
+    this->TM_Write();
+}
+
+TM_Share & TM_Share::operator=(const unsigned int source)
+{
+    this->mem_value = (unsigned int) source;
+    this->TM_Write();
 }
 

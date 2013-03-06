@@ -11,7 +11,9 @@
 //Programmers transaction catches it and throws it to execute transaction
 //effectively stopping the function call part way through
 //#define BEGIN_T try{
-#define BEGIN_T(name) try{ vector<TM_Share> TM = TM_Client::Get_Shared_Memory(name); 
+//#define BEGIN_T(name) try{ vector<TM_Share> TM = TM_Client::Get_Shared_Memory(name); 
+
+#define BEGIN_T(name) try{ Transaction TM = TM_Client::Get_Transaction(name); 
 #define END_T }catch(int error){throw error;}
 
 #ifndef TM_SHARE_H
@@ -43,7 +45,7 @@ class TM_Share
         TM_Share(unsigned int mem_address, unsigned int mem_value, std::queue<TM_Message> *messages_ref);
 
         void Register_MessageQueue(std::queue<TM_Message> *messages_ref);
-        void Register_Network(NC_Client *net);
+        static void Register_Network(NC_Client *net);
 
         void TM_Read();
         void TM_Write();
@@ -54,6 +56,8 @@ class TM_Share
     
         //assigning one share to another (note right side is NOT constant)
         TM_Share & operator=(TM_Share &tm_source);
+        TM_Share & operator=(const int source);
+        TM_Share & operator=(const unsigned int source);
 };
 
 #endif

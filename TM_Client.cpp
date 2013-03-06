@@ -22,9 +22,12 @@ TM_Client::TM_Client()// : network()
     this->done = false;
     this->auto_sync = true;
 
-    //use default host settings
-    this->network.Init(false, this->host_address, this->port);
 
+    //use default host settings
+    TM_Client::network.Init(false, this->host_address, this->port);
+
+
+    TM_Share::Register_Network(&network);
     //launch network thread
     //net_thread = std::thread(&TM_Client::StartNetwork, this);
 //}}}
@@ -37,8 +40,9 @@ TM_Client::TM_Client(bool autoSync) // : network()
     this->auto_sync = autoSync;
 
     //use default host settings
-    this->network.Init(false, this->host_address, this->port);
+    TM_Client::network.Init(false, this->host_address, this->port);
 
+    TM_Share::Register_Network(&network);
     //launch network thread
     //net_thread = std::thread(&TM_Client::StartNetwork, this);
 //}}}
@@ -54,6 +58,9 @@ TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt)
     this->host_address = hostAddress;
     this->port = prt;
 
+    TM_Client::network.Init(false, this->host_address, this->port);
+
+    TM_Share::Register_Network(&network);
     //launch network thread
     //net_thread = std::thread(&TM_Client::StartNetwork, this);
 //}}}
@@ -76,6 +83,7 @@ int TM_Client::Register_Transaction(void *(*transaction)(void *), string name)
 
         transactions.push_back(temp_transaction);
 
+
         cout<<"Transaction "<<name<<" with id "<< transactions.size() - 1<<" registered..."<<endl;
 
         return transactions.size() - 1;
@@ -95,6 +103,7 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
 
     do
     {
+        //Need to (re)load shared memory values here
         try
         {
             //attempt the transaction
@@ -145,8 +154,11 @@ int TM_Client::FindTransaction(string name)
 
 void TM_Client::Add_Shared_Memory(int t_id, TM_Share shared)
 {
-    if(t_id > 0 && t_id < transactions.size())
+    if(t_id >= 0 && t_id < transactions.size())
+    {
+        shared.Register_MessageQueue(&messages);
         transactions[t_id].shared_memory.push_back(shared);
+    }
     else
         cout<<"Transaction with id "<<t_id<<" does not exist..."<<endl;
 }
@@ -186,6 +198,18 @@ vector<TM_Share> TM_Client::Get_Shared_Memory(string name)
     int t_id = FindTransaction(name);
 
     return transactions[t_id].shared_memory;
+}
+
+Transaction TM_Client::Get_Transaction(int t_id)
+{
+    return transactions[t_id];
+}
+
+Transaction TM_Client::Get_Transaction(string name)
+{
+    int t_id = FindTransaction(name);
+
+    return transactions[t_id];
 }
 
 void TM_Client::StartNetwork()

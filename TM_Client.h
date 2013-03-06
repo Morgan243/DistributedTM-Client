@@ -22,8 +22,8 @@ class TM_Client
 {
     private:
         static bool done, auto_sync;
-        static std::string host_address;// = "127.0.0.1";
-        static unsigned int port;// = 1337;
+        static std::string host_address;
+        static unsigned int port;
 
         static NC_Client network;
         static std::thread net_thread;
@@ -57,6 +57,9 @@ class TM_Client
 
         static std::vector<TM_Share> Get_Shared_Memory(int t_id);
         static std::vector<TM_Share> Get_Shared_Memory(std::string name);
+
+        static Transaction Get_Transaction(int t_id);
+        static Transaction Get_Transaction(std::string name);
 
 };
 

@@ -25,17 +25,16 @@ int main(int argc, char *argv[])
 }
 
 
-int count = -1;
 void * test_transaction(void *args)
 {
+    //use the transaction name to set things up
     BEGIN_T("test")
     
-    count++;
 
+    TM.shared_memory[0] = 2;
+
+    //TM.shared_memory[0]
     cout<<"hellow world"<<endl;
-
-    if(!count)
-        throw 1;
 
    
 
