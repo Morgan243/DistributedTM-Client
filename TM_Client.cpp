@@ -2,6 +2,9 @@
 
 using namespace std;
 
+    //------------------------------
+    //Static Variables need defining
+    //------------------------------
     bool TM_Client::done;
     bool TM_Client::auto_sync;
 
@@ -14,9 +17,10 @@ using namespace std;
     vector<Transaction> TM_Client::transactions;
 
     Transaction TM_Client::temp_transaction;
+    //------------------------------
 
 
-TM_Client::TM_Client()// : network()
+TM_Client::TM_Client()
 {
 //{{{
     this->done = false;
@@ -28,13 +32,10 @@ TM_Client::TM_Client()// : network()
 
 
     TM_Share::Register_Network(&network);
-
-    //launch network thread
-    //net_thread = std::thread(&TM_Client::StartNetwork, this);
 //}}}
 }
 
-TM_Client::TM_Client(bool autoSync) // : network()
+TM_Client::TM_Client(bool autoSync)
 {
 //{{{
     this->done = false;
@@ -45,14 +46,10 @@ TM_Client::TM_Client(bool autoSync) // : network()
 
     TM_Share::Register_Network(&network);
     
-
-    //launch network thread
-    //net_thread = std::thread(&TM_Client::StartNetwork, this);
 //}}}
 }
 
 TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt) 
-              // : network(hostAddress, prt)
 {
 //{{{
     this->done = false;
@@ -64,16 +61,12 @@ TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt)
     TM_Client::network.Init(false, this->host_address, this->port);
 
     TM_Share::Register_Network(&network);
-
-    //launch network thread
-    //net_thread = std::thread(&TM_Client::StartNetwork, this);
 //}}}
 }
 
 TM_Client::~TM_Client()
 {
     this->done = true;
-    //net_thread.join();
 }
 
 int TM_Client::Register_Transaction(void *(*transaction)(void *), string name)
@@ -158,6 +151,7 @@ int TM_Client::FindTransaction(string name)
 
 void TM_Client::Add_Shared_Memory(int t_id, TM_Share shared)
 {
+//{{{
     if(t_id >= 0 && t_id < transactions.size())
     {
         shared.Register_MessageQueue(&messages);
@@ -165,6 +159,7 @@ void TM_Client::Add_Shared_Memory(int t_id, TM_Share shared)
     }
     else
         cout<<"Transaction with id "<<t_id<<" does not exist..."<<endl;
+//}}}
 }
 
 void TM_Client::Add_Shared_Memory(int t_id, vector<TM_Share> shared)

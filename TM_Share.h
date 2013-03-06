@@ -30,6 +30,7 @@ struct TM_Message
 class TM_Share
 {
     private:
+        bool auto_sync;
         static NC_Client *network;
 
         unsigned int mem_address;
@@ -43,6 +44,8 @@ class TM_Share
 
         TM_Share(unsigned int mem_address, unsigned int mem_value);
         TM_Share(unsigned int mem_address, unsigned int mem_value, std::queue<TM_Message> *messages_ref);
+
+        void Set_Auto_Sync(bool autoSync);
 
         void Register_MessageQueue(std::queue<TM_Message> *messages_ref);
         static void Register_Network(NC_Client *net);
