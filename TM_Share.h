@@ -2,15 +2,19 @@
 #include <mutex>
 #include <iostream>
 #include <queue>
+#include <stdio.h>
+#include <stdlib.h>
+
+//#include <osstream>
 
 #ifndef TM_SHARE_H
 #define TM_SHARE_H
 
 //define TM encoding
-#define READ 0x00
-#define WRITE 0x01
-#define COMMIT 0x02
-#define MUTEX 0x04
+#define READ 0x01
+#define WRITE 0x02
+#define COMMIT 0x04
+#define MUTEX 0x08
 
 //Wrap the inside of a transaction function with this (see main for example)
 #define BEGIN_T(name) try{ Transaction TM = TM_Client::Get_Transaction(name); 
@@ -21,7 +25,7 @@
 struct TM_Message
 {
     unsigned char code;         //encoded request: read, write, commit attempt, or mutually exclusive access (standard lock)
-    unsigned char *data;        //needed for writes
+    unsigned int data;        //needed for writes
     unsigned int data_size;     //probably not needed if we keep it constant
 };
 
@@ -37,6 +41,7 @@ class TM_Share
 
         std::queue<TM_Message> *messages;               //reference to the clients queue of outgoing messages to the server
         TM_Message temp_message;                        //temporary message for building the vector
+
 
         static void SendMessage(TM_Message message);    //parse and send a single message using the NC_Client 
 

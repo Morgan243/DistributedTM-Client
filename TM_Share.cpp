@@ -38,8 +38,19 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Me
 
 void TM_Share::SendMessage(TM_Message message)
 {
-    unsigned char test_data[] = "hi!";
-    TM_Share::network->Send(test_data,3);
+//{{{
+    char temp_data[1024];
+
+    //clear data buffer
+    bzero(temp_data, sizeof(temp_data));
+
+    //get string version of data
+    int size = sprintf(temp_data,"%c:%u:%u", message.code, message.data, message.data_size);
+
+    cout<<"Message to send: "<<temp_data<<endl;
+
+    TM_Share::network->Send(temp_data, size);
+//}}}
 }
 
 void TM_Share::Set_Auto_Sync(bool autoSync)
@@ -68,7 +79,7 @@ void TM_Share::TM_Read()
 //{{{
     //set up the message to notify TM server
     temp_message.code = READ;
-    temp_message.data = (unsigned char *) &mem_address;
+    temp_message.data = mem_address;
     temp_message.data_size = sizeof(mem_address);
 
     //push it back for the network thread
@@ -82,7 +93,7 @@ void TM_Share::TM_Write()
 //{{{
     //setup the message for the TM server
     temp_message.code = WRITE;
-    temp_message.data = (unsigned char *) &mem_address;
+    temp_message.data = mem_address;
     temp_message.data_size = sizeof(mem_address);
 
     //push it back, oh yeah
