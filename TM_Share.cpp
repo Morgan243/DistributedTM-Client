@@ -16,6 +16,7 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value)
 
     this->mem_address = mem_address;
     this->mem_value = mem_value;
+
     cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
 //}}}
 }
@@ -27,12 +28,13 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Me
 
     this->mem_address = mem_address;
     this->mem_value = mem_value;
+
     cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
 
+    //store pointer to the message queue
     Register_MessageQueue(messages_ref);
 //}}}
 }
-
 
 void TM_Share::Set_Auto_Sync(bool autoSync)
 {
@@ -41,21 +43,24 @@ void TM_Share::Set_Auto_Sync(bool autoSync)
 
 void TM_Share::Register_MessageQueue(queue<TM_Message> *messages_ref)
 {
+//{{{
     this->messages = messages_ref;
     cout<<"Message queue registered in shared memory at "<<mem_address<<"..."<<endl;
+//}}}
 }
 
 void TM_Share::Register_Network(NC_Client *net)
 {
-    TM_Share::network = net;
+//{{{
+   TM_Share::network = net;
    cout<<"Network registered..."<<endl;
+//}}}
 }
-
 
 void TM_Share::TM_Read()
 {
 //{{{
-    //set up the message to notify HOST
+    //set up the message to notify TM server
     temp_message.code = READ;
     temp_message.data = (unsigned char *) &mem_address;
     temp_message.data_size = sizeof(mem_address);
@@ -69,7 +74,7 @@ void TM_Share::TM_Read()
 void TM_Share::TM_Write()
 {
 //{{{
-    //setup the message for the host
+    //setup the message for the TM server
     temp_message.code = WRITE;
     temp_message.data = (unsigned char *) &mem_address;
     temp_message.data_size = sizeof(mem_address);
@@ -80,24 +85,39 @@ void TM_Share::TM_Write()
 //}}}
 }
 
+//OVERLOAD: TM_Share = TM_Share
 TM_Share & TM_Share::operator=(TM_Share &tm_source)
 {
 //{{{
     this->mem_value = tm_source.mem_value;
+
+    //notify TM server of write
     this->TM_Write();
+
+    //notify TM server of read
     tm_source.TM_Read();
 //}}}
 }
 
+//OVERLOAD: TM_Share = int
 TM_Share & TM_Share::operator=(const int source)
 {
+//{{{
     this->mem_value = (unsigned int) source;
+
+    //notofy TM server of write
     this->TM_Write();
+//}}}
 }
 
+//OVERLOAD: TM_Share = unsigned int
 TM_Share & TM_Share::operator=(const unsigned int source)
 {
+//{{{
     this->mem_value = (unsigned int) source;
+
+    //notify TM server of write
     this->TM_Write();
+//}}}
 }
 

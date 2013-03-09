@@ -3,43 +3,43 @@
 #include <iostream>
 #include <queue>
 
-#define READ 0x00
-#define WRITE 0x01
-
-
-//could we wrap an transaction in this, throw an exception in TM_Client
-//Programmers transaction catches it and throws it to execute transaction
-//effectively stopping the function call part way through
-//#define BEGIN_T try{
-//#define BEGIN_T(name) try{ vector<TM_Share> TM = TM_Client::Get_Shared_Memory(name); 
-
-#define BEGIN_T(name) try{ Transaction TM = TM_Client::Get_Transaction(name); 
-#define END_T }catch(int error){throw error;}
-
 #ifndef TM_SHARE_H
 #define TM_SHARE_H
 
+//define TM encoding
+#define READ 0x00
+#define WRITE 0x01
+#define COMMIT 0x02
+#define MUTEX 0x04
+
+//Wrap the inside of a transaction function with this (see main for example)
+#define BEGIN_T(name) try{ Transaction TM = TM_Client::Get_Transaction(name); 
+#define END_T }catch(int error){throw error;}
+
+
+//variables that need to be sent to the TM_Server
 struct TM_Message
 {
-    unsigned char code;
-    unsigned char *data;
-    unsigned int data_size;
-
+    unsigned char code;         //encoded request: read, write, commit attempt, or mutually exclusive access (standard lock)
+    unsigned char *data;        //needed for writes
+    unsigned int data_size;     //probably not needed if we keep it constant
 };
+
 
 class TM_Share
 {
     private:
-        bool auto_sync;
-        static NC_Client *network;
+        bool auto_sync;                     //Synchronize on every mem access transparently?
+        static NC_Client *network;          //reference to the clients networking backend
 
-        unsigned int mem_address;
-        unsigned int mem_value;
-        std::queue<TM_Message> *messages;
+        unsigned int mem_address;           //what TM address is represented
+        unsigned int mem_value;             //whats the actual value/data of this address (should probably buffer)
 
-        TM_Message temp_message;
+        std::queue<TM_Message> *messages;   //reference to the clients queue of outgoing messages to the server
+        TM_Message temp_message;            //temporary message for building the vector
 
     public:
+        //lock for the vector reference of the vector queue
         static std::mutex queue_lock;
 
         TM_Share(unsigned int mem_address, unsigned int mem_value);
@@ -62,5 +62,4 @@ class TM_Share
         TM_Share & operator=(const int source);
         TM_Share & operator=(const unsigned int source);
 };
-
 #endif
