@@ -255,8 +255,8 @@ void TM_Client::StartNetwork()
             //debug statements
             cout<<"-New TM Message-"<<endl;
             cout<<"Code: "<<temp_message.code<<endl;
-            cout<<"Data: "<<temp_message.data<<endl;
-            cout<<"Data size: "<<temp_message.data_size<<endl;
+            cout<<"Adress: "<<temp_message.address<<endl;
+            cout<<"Value: "<<temp_message.value<<endl;
 
             //send data to host(not implemented)
         }

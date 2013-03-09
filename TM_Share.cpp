@@ -45,7 +45,7 @@ void TM_Share::SendMessage(TM_Message message)
     bzero(temp_data, sizeof(temp_data));
 
     //get string version of data
-    int size = sprintf(temp_data,"%c:%u:%u", message.code, message.data, message.data_size);
+    int size = sprintf(temp_data,"%c:%u:%u", message.code, message.address, message.value);
 
     cout<<"Message to send: "<<temp_data<<endl;
 
@@ -79,8 +79,8 @@ void TM_Share::TM_Read()
 //{{{
     //set up the message to notify TM server
     temp_message.code = READ;
-    temp_message.data = mem_address;
-    temp_message.data_size = sizeof(mem_address);
+    temp_message.address = mem_address;
+    temp_message.value = sizeof(mem_address);
 
     //push it back for the network thread
     messages->push(temp_message);
@@ -92,9 +92,9 @@ void TM_Share::TM_Write()
 {
 //{{{
     //setup the message for the TM server
-    temp_message.code = WRITE;
-    temp_message.data = mem_address;
-    temp_message.data_size = sizeof(mem_address);
+    temp_message.code = WRITE;                      //a write was made...
+    temp_message.address = mem_address;                //to this memory address...
+    temp_message.value = sizeof(mem_address);   //get size
 
     //push it back, oh yeah
     messages->push(temp_message);

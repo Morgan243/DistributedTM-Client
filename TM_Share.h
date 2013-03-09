@@ -25,8 +25,8 @@
 struct TM_Message
 {
     unsigned char code;         //encoded request: read, write, commit attempt, or mutually exclusive access (standard lock)
-    unsigned int data;        //needed for writes
-    unsigned int data_size;     //probably not needed if we keep it constant
+    unsigned int address;       
+    unsigned int value;
 };
 
 
@@ -37,7 +37,7 @@ class TM_Share
         static NC_Client *network;                      //reference to the clients networking backend
 
         unsigned int mem_address;                       //what TM address is represented
-        unsigned int mem_value;                         //whats the actual value/data of this address (should probably buffer)
+        unsigned int mem_value, new_value;                         //whats the actual value/data of this address (should probably buffer)
 
         std::queue<TM_Message> *messages;               //reference to the clients queue of outgoing messages to the server
         TM_Message temp_message;                        //temporary message for building the vector
