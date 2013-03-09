@@ -25,8 +25,8 @@ using namespace std;
 TM_Client::TM_Client()
 {
 //{{{
-    this->done = false;
-    this->auto_sync = true;
+    TM_Client::done = false;
+    TM_Client::auto_sync = true;
 
     //use default host settings
     TM_Client::network.Init(false, this->host_address, this->port);
@@ -39,11 +39,11 @@ TM_Client::TM_Client()
 TM_Client::TM_Client(bool autoSync)
 {
 //{{{
-    this->done = false;
-    this->auto_sync = autoSync;
+    TM_Client::done = false;
+    TM_Client::auto_sync = autoSync;
 
     //use default host settings
-    TM_Client::network.Init(false, this->host_address, this->port);
+    TM_Client::network.Init(false, TM_Client::host_address, TM_Client::port);
 
     //give TM_Share access to the network
     TM_Share::Register_Network(&network);
@@ -53,17 +53,19 @@ TM_Client::TM_Client(bool autoSync)
 TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt) 
 {
 //{{{
-    this->done = false;
-    this->auto_sync = autoSync;
+    TM_Client::done = false;
+    TM_Client::auto_sync = autoSync;
 
-    this->host_address = hostAddress;
-    this->port = prt;
+    TM_Client::host_address = hostAddress;
+    TM_Client::port = prt;
 
     //intialize network using user specified host settings
-    TM_Client::network.Init(false, this->host_address, this->port);
+    TM_Client::network.Init(false, TM_Client::host_address, TM_Client::port);
+
+    TM_Client::network.Connect();
 
     //give TM_Share access to the network
-    TM_Share::Register_Network(&network);
+    TM_Share::Register_Network(&TM_Client::network);
 //}}}
 }
 
@@ -71,7 +73,10 @@ TM_Client::~TM_Client()
 {
 //{{{
     //make sure everything stops (thread)
-    this->done = true;
+    TM_Client::done = true;
+
+    cout<<"Sending SHUTDOWN to server..."<<endl;
+    TM_Client::network.Send("SHUTDOWN", 8);
 //}}}
 }
 
@@ -171,6 +176,7 @@ void TM_Client::Add_Shared_Memory(int t_id, TM_Share shared)
     if(t_id >= 0 && t_id < transactions.size())
     {
         shared.Register_MessageQueue(&messages);
+        shared.Register_Network(&TM_Client::network);
         transactions[t_id].shared_memory.push_back(shared);
     }
     else

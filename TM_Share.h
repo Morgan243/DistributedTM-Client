@@ -29,14 +29,16 @@ struct TM_Message
 class TM_Share
 {
     private:
-        bool auto_sync;                     //Synchronize on every mem access transparently?
-        static NC_Client *network;          //reference to the clients networking backend
+        bool auto_sync;                                 //Synchronize on every mem access transparently?
+        static NC_Client *network;                      //reference to the clients networking backend
 
-        unsigned int mem_address;           //what TM address is represented
-        unsigned int mem_value;             //whats the actual value/data of this address (should probably buffer)
+        unsigned int mem_address;                       //what TM address is represented
+        unsigned int mem_value;                         //whats the actual value/data of this address (should probably buffer)
 
-        std::queue<TM_Message> *messages;   //reference to the clients queue of outgoing messages to the server
-        TM_Message temp_message;            //temporary message for building the vector
+        std::queue<TM_Message> *messages;               //reference to the clients queue of outgoing messages to the server
+        TM_Message temp_message;                        //temporary message for building the vector
+
+        static void SendMessage(TM_Message message);    //parse and send a single message using the NC_Client 
 
     public:
         //lock for the vector reference of the vector queue

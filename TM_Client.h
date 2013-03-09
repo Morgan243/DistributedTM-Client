@@ -25,7 +25,7 @@ class TM_Client
         
         static void StartNetwork();                     //Launch a thread into this to handle messages (no auto_sync)
         static int FindTransaction(std::string name);   //find a transaction by it friendly name
-        
+
     public:
          TM_Client();
          TM_Client(bool autoSync);

@@ -36,6 +36,12 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Me
 //}}}
 }
 
+void TM_Share::SendMessage(TM_Message message)
+{
+    unsigned char test_data[] = "hi!";
+    TM_Share::network->Send(test_data,3);
+}
+
 void TM_Share::Set_Auto_Sync(bool autoSync)
 {
     this->auto_sync = autoSync;
@@ -82,6 +88,9 @@ void TM_Share::TM_Write()
     //push it back, oh yeah
     messages->push(temp_message);
     cout<<"Write executed on address "<<this->mem_address<<endl;
+    cout<<"\tAlerting TM server..."<<endl;
+
+    TM_Share::SendMessage(temp_message);
 //}}}
 }
 
