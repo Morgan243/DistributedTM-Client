@@ -53,10 +53,36 @@ void TM_Share::SendMessage(TM_Message message)
 
 TM_Message TM_Share::ReceiveMessage()
 {
+//{{{
+    unsigned pos1, pos2;
     in_buffer.clear();
+
+    //get a message from the server
     TM_Share::network->Receive(&in_buffer,1024);
 
-    cout<<"Server sent: "<<in_buffer<<endl;
+    //find first colon
+    pos1 = in_buffer.find_first_of(":"); 
+
+    //get character before first colon as code
+    in_message.code = in_buffer[pos1 - 1];
+
+    //replace colon so we can find the next one
+    in_buffer[pos1] = '-';
+
+    //find second colon
+    pos2 = in_buffer.find_first_of(":");
+
+    //get the address string and convert it to an integer
+    in_message.address = (unsigned int)atoi(in_buffer.substr(pos1+1, pos2-1).c_str());
+
+    //get the value string and convert it to an integer
+    in_message.value = (unsigned int)atoi(in_buffer.substr(pos2+1, in_buffer.length() - 1).c_str());
+
+    //display values
+    cout<<hex<<"\tcode: "<<(unsigned int)in_message.code<<endl;
+    cout<<hex<<"\taddr: "<<in_message.address<<endl;
+    cout<<hex<<"\tvalue: "<<in_message.value<<endl;
+//}}}
 }
 
 void TM_Share::Set_Auto_Sync(bool autoSync)
@@ -84,12 +110,12 @@ void TM_Share::TM_Read()
 {
 //{{{
     //set up the message to notify TM server
-    temp_message.code = READ;
-    temp_message.address = mem_address;
-    temp_message.value = sizeof(mem_address);
+    out_message.code = READ;
+    out_message.address = mem_address;
+    out_message.value = sizeof(mem_address);
 
     //push it back for the network thread
-    messages->push(temp_message);
+    messages->push(out_message);
     cout<<"Read executed on address "<<this->mem_address<<endl;
 //}}}
 }
@@ -98,21 +124,20 @@ void TM_Share::TM_Write()
 {
 //{{{
     //setup the message for the TM server
-    temp_message.code = WRITE;                      //a write was made...
-    temp_message.address = mem_address;                //to this memory address...
-    temp_message.value = sizeof(mem_address);   //get size
+    out_message.code = WRITE;                      //a write was made...
+    out_message.address = mem_address;                //to this memory address...
+    out_message.value = sizeof(mem_address);   //get size
 
     //push it back, oh yeah
-    messages->push(temp_message);
+    messages->push(out_message);
     cout<<"Write executed on address "<<this->mem_address<<endl;
     cout<<"\tAlerting TM server..."<<endl;
 
-    TM_Share::SendMessage(temp_message);
+    TM_Share::SendMessage(out_message);
 
     cout<<"\tAwaiting approval from server..."<<endl;
     
     TM_Share::ReceiveMessage();
-
 //}}}
 }
 
