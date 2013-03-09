@@ -5,6 +5,7 @@ using namespace std;
     //------------------------------
     //Static Variables need defining
     //------------------------------
+    //{{{
     bool TM_Client::done;
     bool TM_Client::auto_sync;
 
@@ -17,6 +18,7 @@ using namespace std;
     vector<Transaction> TM_Client::transactions;
 
     Transaction TM_Client::temp_transaction;
+    //}}}
     //------------------------------
 
 
@@ -26,11 +28,10 @@ TM_Client::TM_Client()
     this->done = false;
     this->auto_sync = true;
 
-
     //use default host settings
     TM_Client::network.Init(false, this->host_address, this->port);
 
-
+    //give TM_Share access to the network
     TM_Share::Register_Network(&network);
 //}}}
 }
@@ -44,8 +45,8 @@ TM_Client::TM_Client(bool autoSync)
     //use default host settings
     TM_Client::network.Init(false, this->host_address, this->port);
 
+    //give TM_Share access to the network
     TM_Share::Register_Network(&network);
-    
 //}}}
 }
 
@@ -58,37 +59,46 @@ TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt)
     this->host_address = hostAddress;
     this->port = prt;
 
+    //intialize network using user specified host settings
     TM_Client::network.Init(false, this->host_address, this->port);
 
+    //give TM_Share access to the network
     TM_Share::Register_Network(&network);
 //}}}
 }
 
 TM_Client::~TM_Client()
 {
+//{{{
+    //make sure everything stops (thread)
     this->done = true;
+//}}}
 }
 
 int TM_Client::Register_Transaction(void *(*transaction)(void *), string name)
 {
 //{{{
+    //use temp transaction to creatd the transaction for the vector
     temp_transaction.name = name;
 
+    //make sure we aren't being f*cked with
     if(transaction != NULL)
     {
+        //assign function pointer
         temp_transaction.transaction = transaction;
 
+        //added to the BLOT (big list of transactions)
         transactions.push_back(temp_transaction);
-
 
         cout<<"Transaction "<<name<<" with id "<< transactions.size() - 1<<" registered..."<<endl;
 
+        //return the transaction id
         return transactions.size() - 1;
     }
     else
     {
         cout<<"Error registering transaction..."<<endl;
-        return -1;
+        return -1; 
     }
 //}}}
 }
@@ -96,6 +106,7 @@ int TM_Client::Register_Transaction(void *(*transaction)(void *), string name)
 void* TM_Client::Execute_Transaction(int tran_id, void *arg)
 {
 //{{{
+    //local variable to keep loop going (should be move to transaction class)
     bool wasAborted = false;
 
     do
@@ -126,25 +137,29 @@ void* TM_Client::Execute_Transaction(string tran_name, void *arg)
 //{{{
     int t_id = FindTransaction(tran_name);
 
-    if(t_id >= 0)
+    //make sure it will work
+    if(t_id >= 0 && t_id < transactions.size())
         return Execute_Transaction(t_id, arg);
     else
+    {
+        cout<<"Invalide transaction selected: "<<tran_name<<endl;
         return NULL;
+    }
 //}}}
 }
 
 int TM_Client::FindTransaction(string name)
 {
 //{{{
+    //find and return the approriate index
     for( int i = 0; i < transactions.size(); i++)
     {
         if(transactions[i].name == name)
             return i;
     }
 
-    cout<<"Unable to find transaction named "<<name<<endl;
-
     //not found
+    cout<<"Unable to find transaction named "<<name<<endl;
     return -1;
 //}}}
 }
@@ -152,6 +167,7 @@ int TM_Client::FindTransaction(string name)
 void TM_Client::Add_Shared_Memory(int t_id, TM_Share shared)
 {
 //{{{
+    //error check index
     if(t_id >= 0 && t_id < transactions.size())
     {
         shared.Register_MessageQueue(&messages);
@@ -236,7 +252,7 @@ void TM_Client::StartNetwork()
             cout<<"Data: "<<temp_message.data<<endl;
             cout<<"Data size: "<<temp_message.data_size<<endl;
 
-            //send data to host
+            //send data to host(not implemented)
         }
     }
 //}}}
