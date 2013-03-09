@@ -1,5 +1,7 @@
 #include "TM_Share.h"
 
+#ifndef TRANSACTION_H
+#define TRANSACTION_H
 
 class Transaction
 {
@@ -7,7 +9,6 @@ class Transaction
         int abort_count = 0;
 
     public:
-
         std::string name = "NAME_UNSET";
 
         //pointer to a function accepts a void pointer and returns a void pointer
@@ -16,12 +17,9 @@ class Transaction
         //to lazy to make all the getters/setters for this
         std::vector<TM_Share> shared_memory;
 
-
-
         Transaction();
         ~Transaction();
         Transaction(void *(*transaction)(void *), std::string name);
-
 
         int Get_Abort_Count();
         void Increment_Abort_Count();
@@ -29,3 +27,4 @@ class Transaction
 
         void SetTransaction(void *(*transaction)(void *), std::string name);
 };
+#endif
