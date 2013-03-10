@@ -216,9 +216,11 @@ vector<TM_Share> TM_Client::Get_Shared_Memory(int t_id)
 
 vector<TM_Share> TM_Client::Get_Shared_Memory(string name)
 {
+//{{{
     int t_id = FindTransaction(name);
 
     return transactions[t_id].shared_memory;
+//}}}
 }
 
 Transaction TM_Client::Get_Transaction(int t_id)
@@ -228,9 +230,11 @@ Transaction TM_Client::Get_Transaction(int t_id)
 
 Transaction TM_Client::Get_Transaction(string name)
 {
+//{{{
     int t_id = FindTransaction(name);
 
     return transactions[t_id];
+//}}}
 }
 
 void TM_Client::StartNetwork()

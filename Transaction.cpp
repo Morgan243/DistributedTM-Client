@@ -29,7 +29,8 @@ void Transaction::Reset_Abort_Count()
 
 void Transaction::SetTransaction(void *(*transaction)(void *), std::string name)
 {
+//{{{
     this->transaction = transaction;
     this->name = name;
+//}}}
 }
-
