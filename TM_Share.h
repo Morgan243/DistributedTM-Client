@@ -43,7 +43,7 @@ class TM_Share
         unsigned int mem_value, new_value;              //whats the actual value/data of this address (should probably buffer)
 
         std::queue<TM_Message> *messages;               //reference to the clients queue of outgoing messages to the server
-        TM_Message out_message, in_message;                        //temporary message for building the vector
+        TM_Message out_message, in_message;             //temporary message for building the vector
 
 
         void SendMessage(TM_Message message);    //parse and send a single message using the NC_Client 

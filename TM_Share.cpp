@@ -6,7 +6,7 @@ using namespace std;
     //Static Var Define
     //------------------------
     NC_Client *TM_Share::network;
-    mutex TM_Share:: queue_lock;
+    //mutex TM_Share:: queue_lock;
     //------------------------
 
 TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value)
@@ -176,4 +176,3 @@ TM_Share & TM_Share::operator=(const unsigned int source)
     this->TM_Write();
 //}}}
 }
-

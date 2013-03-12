@@ -58,4 +58,3 @@ class TM_Client
         static Transaction Get_Transaction(int t_id);
         static Transaction Get_Transaction(std::string name);
 };
-

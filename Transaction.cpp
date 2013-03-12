@@ -2,14 +2,10 @@
 
 
 Transaction::Transaction()
-{
-
-}
+{}
 
 Transaction::~Transaction()
-{
-
-}
+{}
 
 int Transaction::Get_Abort_Count()
 {

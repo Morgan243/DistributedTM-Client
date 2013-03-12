@@ -185,29 +185,19 @@ void TM_Client::Add_Shared_Memory(int t_id, TM_Share shared)
 }
 
 void TM_Client::Add_Shared_Memory(int t_id, vector<TM_Share> shared)
-{
-
-}
+{}
 
 void TM_Client::Set_Shared_Memory(int t_id, vector<TM_Share> shared)
-{
-
-}
+{}
 
 void TM_Client::Add_Shared_Memory(string name, TM_Share shared)
-{
-
-}
+{}
 
 void TM_Client::Add_Shared_Memory(string name, vector<TM_Share> shared)
-{
-
-}
+{}
 
 void TM_Client::Set_Shared_Memory(string name, vector<TM_Share> shared)
-{
-
-}
+{}
 
 vector<TM_Share> TM_Client::Get_Shared_Memory(int t_id)
 {
@@ -245,16 +235,16 @@ void TM_Client::StartNetwork()
     while(!done)
     {
 
-        TM_Share::queue_lock.lock();
+        //TM_Share::queue_lock.lock();
             temp_size = messages.size();
-        TM_Share::queue_lock.unlock();
+        //TM_Share::queue_lock.unlock();
 
         if(temp_size)
         {
-            TM_Share::queue_lock.lock();
+            //TM_Share::queue_lock.lock();
                 temp_message = messages.front();
                 messages.pop();
-            TM_Share::queue_lock.unlock();
+            //TM_Share::queue_lock.unlock();
 
             //debug statements
             cout<<"-New TM Message-"<<endl;
