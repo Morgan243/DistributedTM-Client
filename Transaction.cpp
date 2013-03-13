@@ -30,3 +30,8 @@ void Transaction::SetTransaction(void *(*transaction)(void *), std::string name)
     this->name = name;
 //}}}
 }
+
+void Transaction::Sync()
+{
+
+}

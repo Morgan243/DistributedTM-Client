@@ -43,12 +43,12 @@ void * test_transaction(void *args)
 {
     //use the transaction name to set things up
     BEGIN_T("test")
-    
-    TM.shared_memory[0] = 2;
+        cout<<">>MAIN: Attempting write on [0], [0] = "<<TM.shared_memory[0]<<endl;
+        TM.shared_memory[0] = 2;
+        cout<<"\t>>MAIN: Write on 0 completed, [0] = "<<TM.shared_memory[0]<<endl;
 
-    //TM.shared_memory[0]
-    cout<<"hellow world"<<endl;
 
+        cout<<"hellow world"<<endl;
 
     END_T
 }

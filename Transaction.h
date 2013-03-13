@@ -26,5 +26,8 @@ class Transaction
         void Reset_Abort_Count();
 
         void SetTransaction(void *(*transaction)(void *), std::string name);
+
+        //check all memory usage for conflicts
+        void Sync();
 };
 #endif

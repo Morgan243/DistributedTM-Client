@@ -14,6 +14,9 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value)
 //{{{
     this->auto_sync = true;
 
+    this->isWrite = false;
+    this->isRead = false;
+
     this->mem_address = mem_address;
     this->mem_value = mem_value;
 
@@ -45,7 +48,7 @@ void TM_Share::SendMessage(TM_Message message)
     //get string version of data
     int size = sprintf(this->out_buffer, "%c:%u:%u", message.code, message.address, message.value);
 
-    cout<<"Message to send: "<<this->out_buffer<<endl;
+    //cout<<"Message to send: "<<this->out_buffer<<endl;
 
     TM_Share::network->Send(this->out_buffer, size);
 //}}}
@@ -82,6 +85,8 @@ TM_Message TM_Share::ReceiveMessage()
     cout<<hex<<"\tcode: "<<(unsigned int)in_message.code<<endl;
     cout<<hex<<"\taddr: "<<in_message.address<<endl;
     cout<<hex<<"\tvalue: "<<in_message.value<<endl;
+
+    return in_message;
 //}}}
 }
 
@@ -124,9 +129,9 @@ void TM_Share::TM_Write()
 {
 //{{{
     //setup the message for the TM server
-    out_message.code = WRITE;                      //a write was made...
-    out_message.address = mem_address;                //to this memory address...
-    out_message.value = sizeof(mem_address);   //get size
+    out_message.code = WRITE;                   //a write was made...
+    out_message.address = mem_address;          //to this memory address...
+    out_message.value = new_value;              //get speculative value
 
     //push it back, oh yeah
     messages->push(out_message);
@@ -137,6 +142,39 @@ void TM_Share::TM_Write()
 
     cout<<"\tAwaiting approval from server..."<<endl;
     
+    //in message set and returned here
+    TM_Share::ReceiveMessage();
+
+    //see if the server rejected the transaction
+    if(in_message.code & ABORT)
+    {
+        this->isWrite = false;
+        throw ABORT;
+    }
+//}}}
+}
+
+void TM_Share::TM_Sync()
+{
+//{{{
+    //encode message
+    if(isWrite)
+        out_message.code = SYNC | WRITE;
+    else 
+        out_message.code = SYNC | READ;
+
+    //indicate the address
+    out_message.address = mem_address;
+
+    //value shouldn't matter
+    out_message.value = 0;                  
+
+    cout<<"Syncing address "<<out_message.address<<" with server..."<<endl;
+
+    cout<<"\tContacting server..."<<endl;
+    TM_Share::SendMessage(out_message);
+    cout<<"Waiting for server sync response..."<<endl;
+
     TM_Share::ReceiveMessage();
 //}}}
 }
@@ -145,7 +183,9 @@ void TM_Share::TM_Write()
 TM_Share & TM_Share::operator=(TM_Share &tm_source)
 {
 //{{{
-    this->mem_value = tm_source.mem_value;
+    this->isWrite = true;
+
+    this->new_value = tm_source.mem_value;
 
     //notify TM server of write
     this->TM_Write();
@@ -159,7 +199,9 @@ TM_Share & TM_Share::operator=(TM_Share &tm_source)
 TM_Share & TM_Share::operator=(const int source)
 {
 //{{{
-    this->mem_value = (unsigned int) source;
+    this->isWrite = true;
+
+    this->new_value = (unsigned int) source;
 
     //notofy TM server of write
     this->TM_Write();
@@ -170,9 +212,23 @@ TM_Share & TM_Share::operator=(const int source)
 TM_Share & TM_Share::operator=(const unsigned int source)
 {
 //{{{
-    this->mem_value = (unsigned int) source;
+    this->isWrite = true;
+
+    this->new_value = (unsigned int) source;
 
     //notify TM server of write
     this->TM_Write();
+//}}}
+}
+
+ostream& operator<<(ostream &out, const TM_Share &tm_share)
+{
+//{{{
+    if(tm_share.isWrite)
+        out<<tm_share.new_value;
+    else
+        out<<tm_share.mem_value;
+
+    return out;
 //}}}
 }

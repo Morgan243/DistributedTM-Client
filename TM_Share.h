@@ -15,7 +15,9 @@
 #define READ 0x01
 #define WRITE 0x02
 #define COMMIT 0x04
-#define MUTEX 0x08
+#define ABORT 0x08
+#define SYNC 0x10
+#define MUTEX 0x20
 
 //Wrap the inside of a transaction function with this (see main for example)
 #define BEGIN_T(name) try{ Transaction TM = TM_Client::Get_Transaction(name); 
@@ -39,6 +41,8 @@ class TM_Share
         bool auto_sync;                                 //Synchronize on every mem access transparently?
         static NC_Client *network;                      //reference to the clients networking backend
 
+        bool isWrite, isRead;                           //keep track of actions (is isRead needed?)
+
         unsigned int mem_address;                       //what TM address is represented
         unsigned int mem_value, new_value;              //whats the actual value/data of this address (should probably buffer)
 
@@ -46,11 +50,11 @@ class TM_Share
         TM_Message out_message, in_message;             //temporary message for building the vector
 
 
-        void SendMessage(TM_Message message);    //parse and send a single message using the NC_Client 
-        TM_Message ReceiveMessage();             //receive data from server; continue, abort, commit success, etc.
+        void SendMessage(TM_Message message);           //parse and send a single message using the NC_Client 
+        TM_Message ReceiveMessage();                    //receive data from server; continue, abort, commit success, etc.
 
     public:
-        //lock for the vector reference of the vector queue
+        //lock for the vector reference of the vector queue (needed?)
         static std::mutex queue_lock;
 
         TM_Share(unsigned int mem_address, unsigned int mem_value);
@@ -61,8 +65,11 @@ class TM_Share
         void Register_MessageQueue(std::queue<TM_Message> *messages_ref);
         static void Register_Network(NC_Client *net);
 
-        void TM_Read();
-        void TM_Write();
+        void TM_Init();     //call when first entering a transaction (get fresh value for mem_value member)
+        void TM_Read();     //Read occured, don't really need to do anything (maybe notify analysis server)
+        void TM_Write();    //Write occured on the memory, notify server and abort if necessary
+        void TM_Sync();     //Let the server know about the current state (read or write), abort if needed
+        void TM_Commit();   //Try to commit the actual data values
 
         //---------------
         //overload writes
@@ -72,5 +79,7 @@ class TM_Share
         TM_Share & operator=(TM_Share &tm_source);
         TM_Share & operator=(const int source);
         TM_Share & operator=(const unsigned int source);
+
+        friend std::ostream & operator<<(std::ostream &out, const TM_Share &tm_share);
 };
 #endif
