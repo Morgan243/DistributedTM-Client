@@ -33,5 +33,17 @@ void Transaction::SetTransaction(void *(*transaction)(void *), std::string name)
 
 void Transaction::Sync()
 {
-
+//{{{
+    try
+    {
+        for(int i = 0; i < this->shared_memory.size(); i++)
+        {
+            shared_memory[i].TM_Sync();
+        }
+    }
+    catch(int error)
+    {
+        throw error;
+    }
+//}}}
 }

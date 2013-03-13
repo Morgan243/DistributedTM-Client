@@ -111,6 +111,11 @@ void TM_Share::Register_Network(NC_Client *net)
 //}}}
 }
 
+void TM_Init()
+{
+
+}
+
 void TM_Share::TM_Read()
 {
 //{{{
@@ -179,6 +184,11 @@ void TM_Share::TM_Sync()
 //}}}
 }
 
+void TM_Share::TM_Commit()
+{
+
+}
+
 //OVERLOAD: TM_Share = TM_Share
 TM_Share & TM_Share::operator=(TM_Share &tm_source)
 {
@@ -221,6 +231,7 @@ TM_Share & TM_Share::operator=(const unsigned int source)
 //}}}
 }
 
+//OVERLOAD: <<TM_Share<< (used with cout primarily)
 ostream& operator<<(ostream &out, const TM_Share &tm_share)
 {
 //{{{

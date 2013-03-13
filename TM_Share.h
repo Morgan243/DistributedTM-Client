@@ -18,6 +18,7 @@
 #define ABORT 0x08
 #define SYNC 0x10
 #define MUTEX 0x20
+#define INIT 0x40
 
 //Wrap the inside of a transaction function with this (see main for example)
 #define BEGIN_T(name) try{ Transaction TM = TM_Client::Get_Transaction(name); 
