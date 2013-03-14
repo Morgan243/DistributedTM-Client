@@ -275,27 +275,19 @@ void TM_Share::TM_Commit()
     {
         out_message.code = WRITE | COMMIT;                   //a write was made...
         out_message.value = new_value;              //get speculative value
-
-        out_message.address = mem_address;          //to this memory address...
-
         cout<<"Commiting the changes to address "<<this->mem_address<<endl;
-        cout<<"\tPusing TM server..."<<endl;
-
-        TM_Share::SendMessage(out_message);
-
-        //does the server need to respond at all?
-       // cout<<"\tAwaiting approval from server..."<<endl;
-       // 
-       // //in message set and returned here
-       // TM_Share::ReceiveMessage();
-
-       // //see if the server rejected the transaction
-       // if(in_message.code & ABORT)
-       // {
-       //     this->isWrite = false;
-       //     throw ABORT;
-       // }
     }
+    else
+    {
+        out_message.code = READ | COMMIT;                   //a write was made...
+        cout<<"Commiting the read finish to address "<<this->mem_address<<endl;
+    }
+
+    out_message.address = mem_address;          //to this memory address...
+
+    cout<<"\tPusing TM server..."<<endl;
+
+    TM_Share::SendMessage(out_message);
 //}}}
 }
 
