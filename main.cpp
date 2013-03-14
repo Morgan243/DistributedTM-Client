@@ -4,13 +4,23 @@
 
 using namespace std;
 
+struct inputArgs{
+    string ipAddress;
+    string coreName;
+};
+
 void * test_transaction(void *args);
+void HandleInput(int argc, char *argv[], inputArgs &input);
 
 int main(int argc, char *argv[])
 {
     string user_in;
     int t_id = 0;
-
+    
+    inputArgs cmdInput;
+    HandleInput(argc, argv, cmdInput);
+    cout << cmdInput.coreName << endl;
+    cout << cmdInput.ipAddress << endl;
     //ARGS: auto sync on, use loop back, port 1337
     TM_Client tm_client(true, "127.0.0.1", 1337, "IM_A_PI");
 
@@ -38,6 +48,14 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+void HandleInput(int argc, char *argv[], inputArgs &input){
+    for(int i = 0; i < argc; i++){
+        if((strcmp(argv[i],"-ip") == 0))
+            input.ipAddress = argv[i+1];
+        if((strcmp(argv[i],"-n") == 0))
+            input.coreName = argv[i+1];
+    }
+}
 
 void * test_transaction(void *args)
 {
