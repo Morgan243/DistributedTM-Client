@@ -70,7 +70,6 @@ void Transaction::Commit()
 //{{{
     try
     {
-
         //first, announce commit
         //make sure sommit will go through before sending data
         TM_Share::Declare_Commit();
