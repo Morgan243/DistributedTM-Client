@@ -8,6 +8,9 @@ using namespace std;
     //{{{
     bool TM_Client::done;
     bool TM_Client::auto_sync;
+    bool TM_Client::name_announced;
+
+    string TM_Client::client_name;
 
     string TM_Client::host_address = "127.0.0.1";
     unsigned int TM_Client::port = 1337;
@@ -25,6 +28,7 @@ using namespace std;
 TM_Client::TM_Client()
 {
 //{{{
+    TM_Client::name_announced = false;
     TM_Client::done = false;
     TM_Client::auto_sync = true;
 
@@ -39,6 +43,7 @@ TM_Client::TM_Client()
 TM_Client::TM_Client(bool autoSync)
 {
 //{{{
+    TM_Client::name_announced = false;
     TM_Client::done = false;
     TM_Client::auto_sync = autoSync;
 
@@ -53,6 +58,7 @@ TM_Client::TM_Client(bool autoSync)
 TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt) 
 {
 //{{{
+    TM_Client::name_announced = false;
     TM_Client::done = false;
     TM_Client::auto_sync = autoSync;
 
@@ -69,6 +75,30 @@ TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt)
 //}}}
 }
 
+TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt, string clientName) 
+{
+//{{{
+    TM_Client::name_announced = false;
+    TM_Client::done = false;
+    TM_Client::auto_sync = autoSync;
+
+    TM_Client::host_address = hostAddress;
+    TM_Client::port = prt;
+
+    //intialize network using user specified host settings
+    TM_Client::network.Init(false, TM_Client::host_address, TM_Client::port);
+
+    TM_Client::network.Connect();
+
+    //give TM_Share access to the network
+    TM_Share::Register_Network(&TM_Client::network);
+
+    TM_Client::Set_Client_Name(clientName);
+
+    TM_Client::Announce_Client_Name();
+//}}}
+}
+
 TM_Client::~TM_Client()
 {
 //{{{
@@ -77,6 +107,25 @@ TM_Client::~TM_Client()
 
     cout<<"Sending SHUTDOWN to server..."<<endl;
     TM_Client::network.Send("SHUTDOWN", 8);
+//}}}
+}
+
+void TM_Client::Set_Client_Name(string clientName)
+{
+    TM_Client::client_name = clientName;
+
+}
+
+void TM_Client::Announce_Client_Name()
+{
+//{{{
+    if(!TM_Client::name_announced)
+    {
+        //send name to server
+        TM_Client::network.Send(TM_Client::client_name.c_str(), TM_Client::client_name.length());
+    
+        TM_Client::name_announced = true;
+    }
 //}}}
 }
 

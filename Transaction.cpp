@@ -47,3 +47,43 @@ void Transaction::Sync()
     }
 //}}}
 }
+
+void Transaction::Init()
+{
+//{{{
+    try
+    {
+        for(int i = 0; i < shared_memory.size(); i++)
+        {
+           shared_memory[i].TM_Init(); 
+        }
+    }
+    catch(int error)
+    {
+        throw error;
+    }
+//}}}
+}
+
+void Transaction::Commit()
+{
+//{{{
+    try
+    {
+
+        //first, announce commit
+        //make sure sommit will go through before sending data
+        TM_Share::Declare_Commit();
+
+        //send the data
+        for(int i = 0; i < shared_memory.size(); i++)
+        {
+           shared_memory[i].TM_Commit(); 
+        }
+    }
+    catch(int error)
+    {
+        throw error;
+    }
+//}}}
+}

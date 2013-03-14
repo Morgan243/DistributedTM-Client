@@ -11,8 +11,10 @@ class TM_Client
 {
     private:
         static bool done,                               //stop everything
-                    auto_sync;                          //sync on every mem access or manually
+                    auto_sync,                          //sync on every mem access or manually
+                    name_announced;
 
+        static std::string client_name;                 //friendly name for the client
         static std::string host_address;                //adress of TM server
         static unsigned int port;                       //port of TM server
 
@@ -27,10 +29,14 @@ class TM_Client
         static int FindTransaction(std::string name);   //find a transaction by it friendly name
 
     public:
-         TM_Client();
-         TM_Client(bool autoSync);
-         TM_Client(bool autoSync, std::string host_address, unsigned int port);
+        TM_Client();
+        TM_Client(bool autoSync);
+        TM_Client(bool autoSync, std::string host_address, unsigned int port);
+        TM_Client(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName);
         ~TM_Client();
+
+        void Set_Client_Name(std::string clientName);
+        void Announce_Client_Name();
 
         //load a function as a transaction, should be: 'void* my_func(void *args)'
         //returns the transaction id (vector index)

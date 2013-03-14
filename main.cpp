@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     int t_id = 0;
 
     //ARGS: auto sync on, use loop back, port 1337
-    TM_Client tm_client(true, "127.0.0.1", 1337);
+    TM_Client tm_client(true, "127.0.0.1", 1337, "IM_A_PI");
 
     //store transaction for later execution, get id in return
     t_id = tm_client.Register_Transaction(test_transaction, "test");

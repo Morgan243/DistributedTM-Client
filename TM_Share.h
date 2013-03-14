@@ -21,8 +21,12 @@
 #define INIT 0x40
 
 //Wrap the inside of a transaction function with this (see main for example)
-#define BEGIN_T(name) try{ Transaction TM = TM_Client::Get_Transaction(name); 
-#define END_T }catch(int error){throw error;}
+#define BEGIN_T(name) try{ \
+    Transaction TM = TM_Client::Get_Transaction(name);\
+    TM.Init();
+
+#define END_T TM.Commit(); \
+    }catch(int error){throw error;}
 
 
 //variables that need to be sent to the TM_Server
@@ -51,6 +55,8 @@ class TM_Share
         TM_Message out_message, in_message;             //temporary message for building the vector
 
 
+        static void SendMessage(char code, unsigned int address, unsigned int value);
+        static void ReceiveMessage(char *code, unsigned int *address, unsigned int *value);
         void SendMessage(TM_Message message);           //parse and send a single message using the NC_Client 
         TM_Message ReceiveMessage();                    //receive data from server; continue, abort, commit success, etc.
 
@@ -65,6 +71,9 @@ class TM_Share
 
         void Register_MessageQueue(std::queue<TM_Message> *messages_ref);
         static void Register_Network(NC_Client *net);
+
+
+        static void Declare_Commit();
 
         void TM_Init();     //call when first entering a transaction (get fresh value for mem_value member)
         void TM_Read();     //Read occured, don't really need to do anything (maybe notify analysis server)

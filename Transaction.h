@@ -29,5 +29,7 @@ class Transaction
 
         //check all memory usage for conflicts
         void Sync();
+        void Init();
+        void Commit();
 };
 #endif

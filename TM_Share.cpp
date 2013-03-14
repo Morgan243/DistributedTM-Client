@@ -38,6 +38,51 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Me
     Register_MessageQueue(messages_ref);
 //}}}
 }
+void TM_Share::SendMessage(char code, unsigned int address, unsigned int value)
+{
+ //{{{
+    char temp_buffer[256];
+   
+    //clear data buffer
+    bzero(temp_buffer, sizeof(temp_buffer));
+
+    //get string version of data
+    int size = sprintf(temp_buffer, "%c:%u:%u", code, address, value);
+
+    TM_Share::network->Send(temp_buffer, size);
+//}}}
+}
+
+void TM_Share::ReceiveMessage(char *code, unsigned int *address, unsigned int *value)
+{
+//{{{
+    unsigned pos1, pos2;
+    string buffer;
+
+    //get a message from the server
+    TM_Share::network->Receive(&buffer,1024);
+
+    //find first colon
+    pos1 = buffer.find_first_of(":"); 
+
+    //get character before first colon as code
+    *code = buffer[pos1 - 1];
+
+    //replace colon so we can find the next one
+    buffer[pos1] = '-';
+
+    //find second colon
+    pos2 = buffer.find_first_of(":");
+
+    //get the address string and convert it to an integer
+    *address = (unsigned int)atoi(buffer.substr(pos1+1, pos2-1).c_str());
+
+    //get the value string and convert it to an integer
+    *value = (unsigned int)atoi(buffer.substr(pos2+1, buffer.length() - 1).c_str());
+
+//}}}
+
+}
 
 void TM_Share::SendMessage(TM_Message message)
 {
@@ -111,9 +156,47 @@ void TM_Share::Register_Network(NC_Client *net)
 //}}}
 }
 
-void TM_Init()
+void TM_Share::Declare_Commit()
 {
+//{{{
 
+    char code = COMMIT;
+    unsigned int address = 0;
+    unsigned int value = 0; //could make this a count or something else useful
+
+    TM_Share::SendMessage(code, address, value);
+
+    TM_Share::ReceiveMessage(&code, &address, &value);
+
+    if(code & ABORT)
+    {
+        throw ABORT;
+    }
+//}}}
+}
+
+void TM_Share::TM_Init()
+{
+//{{{
+    out_message.code = INIT;
+    out_message.address = mem_address;
+    out_message.value = 0;
+
+    TM_Share::SendMessage(out_message);
+
+    TM_Share::ReceiveMessage();
+
+    if(in_message.code & ABORT)
+    {
+        this->isRead = false;
+        throw ABORT;
+    }
+    else
+    {
+        this->isRead = true;
+        mem_value = in_message.value;
+    }
+//}}}
 }
 
 void TM_Share::TM_Read()
@@ -122,7 +205,7 @@ void TM_Share::TM_Read()
     //set up the message to notify TM server
     out_message.code = READ;
     out_message.address = mem_address;
-    out_message.value = sizeof(mem_address);
+    out_message.value = 0;//mem_value;
 
     //push it back for the network thread
     messages->push(out_message);
@@ -186,7 +269,34 @@ void TM_Share::TM_Sync()
 
 void TM_Share::TM_Commit()
 {
+//{{{
+    //Only send a message if need to update a value
+    if(this->isWrite)
+    {
+        out_message.code = WRITE | COMMIT;                   //a write was made...
+        out_message.value = new_value;              //get speculative value
 
+        out_message.address = mem_address;          //to this memory address...
+
+        cout<<"Commiting the changes to address "<<this->mem_address<<endl;
+        cout<<"\tPusing TM server..."<<endl;
+
+        TM_Share::SendMessage(out_message);
+
+        //does the server need to respond at all?
+       // cout<<"\tAwaiting approval from server..."<<endl;
+       // 
+       // //in message set and returned here
+       // TM_Share::ReceiveMessage();
+
+       // //see if the server rejected the transaction
+       // if(in_message.code & ABORT)
+       // {
+       //     this->isWrite = false;
+       //     throw ABORT;
+       // }
+    }
+//}}}
 }
 
 //OVERLOAD: TM_Share = TM_Share
