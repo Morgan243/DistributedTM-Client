@@ -1,5 +1,7 @@
 #include "TM_Client.h"
 
+#define DEBUG 1
+
 using namespace std;
 
     //------------------------------
@@ -104,8 +106,11 @@ TM_Client::~TM_Client()
 //{{{
     //make sure everything stops (thread)
     TM_Client::done = true;
-
+   
+    #ifdef DEBUG
     cout<<"Sending SHUTDOWN to server..."<<endl;
+    #endif
+    
     TM_Client::network.Send("SHUTDOWN", 8);
 //}}}
 }
@@ -143,15 +148,17 @@ int TM_Client::Register_Transaction(void *(*transaction)(void *), string name)
 
         //added to the BLOT (big list of transactions)
         transactions.push_back(temp_transaction);
-
+        #ifdef DEBUG
         cout<<"Transaction "<<name<<" with id "<< transactions.size() - 1<<" registered..."<<endl;
-
+        #endif
         //return the transaction id
         return transactions.size() - 1;
     }
     else
     {
+        #ifdef DEBUG
         cout<<"Error registering transaction..."<<endl;
+        #endif
         return -1; 
     }
 //}}}
@@ -196,7 +203,9 @@ void* TM_Client::Execute_Transaction(string tran_name, void *arg)
         return Execute_Transaction(t_id, arg);
     else
     {
+        #ifdef DEBUG
         cout<<"Invalide transaction selected: "<<tran_name<<endl;
+        #endif
         return NULL;
     }
 //}}}
@@ -212,8 +221,10 @@ int TM_Client::FindTransaction(string name)
             return i;
     }
 
+    #ifdef DEBUG
     //not found
     cout<<"Unable to find transaction named "<<name<<endl;
+    #endif
     return -1;
 //}}}
 }
@@ -228,13 +239,26 @@ void TM_Client::Add_Shared_Memory(int t_id, TM_Share shared)
         shared.Register_Network(&TM_Client::network);
         transactions[t_id].shared_memory.push_back(shared);
     }
+    #ifdef DEBUG
     else
+    {
         cout<<"Transaction with id "<<t_id<<" does not exist..."<<endl;
+    }
+    #endif
 //}}}
 }
 
 void TM_Client::Add_Shared_Memory(int t_id, vector<TM_Share> shared)
-{}
+{
+    if(t_id >= 0 && t_id < transactions.size()){
+        for(int i = 0; i < share.size(); i++){
+            shared[i].Register_MessageQueue(&messages);
+            shared[i].Register_Network(&TM_Client::network);
+            transactions[t_id].shared_memory.push_back(shared[i]);
+        }
+    }
+    
+}
 
 void TM_Client::Set_Shared_Memory(int t_id, vector<TM_Share> shared)
 {}
@@ -294,13 +318,13 @@ void TM_Client::StartNetwork()
                 temp_message = messages.front();
                 messages.pop();
             //TM_Share::queue_lock.unlock();
-
+            #ifdef DEBUG
             //debug statements
             cout<<"-New TM Message-"<<endl;
             cout<<"Code: "<<temp_message.code<<endl;
             cout<<"Adress: "<<temp_message.address<<endl;
             cout<<"Value: "<<temp_message.value<<endl;
-
+            #endif
             //send data to host(not implemented)
         }
     }
