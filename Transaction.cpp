@@ -1,5 +1,6 @@
 #include "Transaction.h"
 
+#define DEBUG 1 
 
 Transaction::Transaction()
 {}
