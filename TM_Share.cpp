@@ -320,7 +320,7 @@ void TM_Share::TM_Commit()
         cout<<"Commiting the changes to address "<<this->mem_address<<endl;
         #endif
     }
-    else
+    else if(this->isRead)
     {
         out_message.code = READ | COMMIT;                   //a write was made...
         out_message.value = mem_value;
@@ -329,6 +329,11 @@ void TM_Share::TM_Commit()
         cout<<"Commiting the read finish to address "<<this->mem_address<<endl;
         #endif
     
+    }
+    else
+    {
+        cout<<"No access was made on address "<<this->mem_address<<", nothing to commit..."<<endl;
+        return;
     }
 
     out_message.address = this->mem_address;          //to this memory address...
