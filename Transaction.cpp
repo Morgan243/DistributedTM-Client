@@ -52,17 +52,17 @@ void Transaction::Sync()
 void Transaction::Init()
 {
 //{{{
-    try
-    {
-        for(int i = 0; i < shared_memory.size(); i++)
-        {
-           shared_memory[i].TM_Init(); 
-        }
-    }
-    catch(int error)
-    {
-        throw error;
-    }
+//    try
+//    {
+//        for(int i = 0; i < shared_memory.size(); i++)
+//        {
+//           shared_memory[i].TM_Init(); 
+//        }
+//    }
+//    catch(int error)
+//    {
+//        throw error;
+//    }
 //}}}
 }
 

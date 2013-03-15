@@ -30,9 +30,6 @@ int main(int argc, char *argv[])
     void * args = NULL;
     vector<TM_Share> shared_memory;
 
-    //create a shared memory element
-    TM_Share test_mem(1, 99);
-
     inputArgs cmdInput;
         cmdInput.ipAddress = "127.0.0.1";       //default to loopback
         cmdInput.coreName = "Default Name";     //default core name (could use time or rand)
@@ -52,22 +49,17 @@ int main(int argc, char *argv[])
     {
         //store transaction for later execution, get id in return
         t_id = tm_client.Register_Transaction(test_transaction, "test");
-
-        //init memory
-        shared_memory.push_back(TM_Share(0,99));
-        
-        args = &index;
     }
     else if(cmdInput.transaction == "increment")
     {
         t_id = tm_client.Register_Transaction(incrementer, "increment");
-        
-        //init memory
-        for(int i = 0; i < MEM_SIZE; i++)
-            shared_memory.push_back(TM_Share(i,99));
-
-        args = &index;
     }
+
+    //init memory
+    for(int i = 0; i < MEM_SIZE; i++)
+        shared_memory.push_back(TM_Share(i,0));
+
+    args = &index;
 
     //register shared memory for use in transaction
     tm_client.Add_Shared_Memory(t_id, shared_memory);
@@ -78,11 +70,7 @@ int main(int argc, char *argv[])
     if(user_in == "y")
     {
         for(index = 0; index < MEM_SIZE; index++)
-            //Execute the transaction, will repeat until no conflicts
             tm_client.Execute_Transaction(t_id, args);
-            //index++;
-            //usleep(50000);
-            //tm_client.Execute_Transaction(t_id, args);
     }
 
     cout<<"Enter anything to terminate..."<<endl;
@@ -101,7 +89,8 @@ void * test_transaction(void *args)
         //cout<<"index is : "<<*index<<endl;
         //TM.shared_memory[*index] = 2;
         //cout<<">>TRANSACTION: Attempting write on ["<<*index<<"], ["<<*index<<"] = "<<TM.shared_memory[*index]<<endl;
-        cout<<"Memory["<<*index<<"] = "<<TM.shared_memory[*index] <<endl;
+        int value = TM.shared_memory[*index].toInt();
+        cout<<"Memory["<<*index<<"] = "<<value <<endl;
         //cout<<"\t>>TRANSACTION: Write completed on ["<<*index<<"], ["<<*index<<"] = "<<TM.shared_memory[*index]<<endl;
     END_T
 //}}}

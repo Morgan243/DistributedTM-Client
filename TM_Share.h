@@ -93,6 +93,6 @@ class TM_Share
         TM_Share & operator=(const unsigned int source);
         TM_Share & operator+(TM_Share &tm_source);
         TM_Share & operator+(const int source);
-        friend std::ostream & operator<<(std::ostream &out, const TM_Share &tm_share);
+        friend std::ostream & operator<<(std::ostream &out, TM_Share &tm_share);
 };
 #endif

@@ -32,6 +32,9 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Me
 //{{{
     this->auto_sync = true;
 
+    this->isWrite = false;
+    this->isRead = false;
+
     this->mem_address = mem_address;
     this->mem_value = mem_value;
     #ifdef DEBUG
@@ -229,7 +232,13 @@ void TM_Share::TM_Read()
     out_message.value = 0;//mem_value;
 
     //push it back for the network thread
-    messages->push(out_message);
+   
+    //if not read yet
+    if(!this->isRead)
+    {
+        this->isRead = true;
+        TM_Init();
+    }
     #ifdef DEBUG
     cout<<"Read executed on address "<<this->mem_address<<endl;
     #endif
@@ -314,6 +323,7 @@ void TM_Share::TM_Commit()
     else
     {
         out_message.code = READ | COMMIT;                   //a write was made...
+        out_message.value = mem_value;
         
         #ifdef DEBUG
         cout<<"Commiting the read finish to address "<<this->mem_address<<endl;
@@ -324,7 +334,7 @@ void TM_Share::TM_Commit()
     out_message.address = this->mem_address;          //to this memory address...
 
     #ifdef DEBUG
-    cout<<"\tPusing TM server..."<<endl;
+    cout<<"\tPushing TM server..."<<endl;
     #endif
 
     TM_Share::SendMessage(out_message);
@@ -353,6 +363,9 @@ TM_Share & TM_Share::operator=(TM_Share &tm_source)
 
 int  TM_Share::toInt()
 {
+
+    TM_Read();
+
     if(isWrite)
        return new_value;
     else
@@ -422,9 +435,11 @@ TM_Share & TM_Share::operator+(const int source)
 }
 
 //OVERLOAD: <<TM_Share<< (used with cout primarily)
-ostream& operator<<(ostream &out, const TM_Share &tm_share)
+ostream& operator<<(ostream &out, TM_Share &tm_share)
 {
 //{{{
+    tm_share.TM_Read();
+
     if(tm_share.isWrite)
         out<<tm_share.new_value;
     else
