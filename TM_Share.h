@@ -72,6 +72,7 @@ class TM_Share
         void Register_MessageQueue(std::queue<TM_Message> *messages_ref);
         static void Register_Network(NC_Client *net);
 
+        unsigned int Get_Address();
 
         static void Declare_Commit();
 
@@ -82,14 +83,16 @@ class TM_Share
         void TM_Commit();   //Try to commit the actual data values
 
         //---------------
-        //overload writes
+        //overloads
         //---------------
+        int toInt();
     
         //assigning one share to another (note right side is NOT constant)
         TM_Share & operator=(TM_Share &tm_source);
         TM_Share & operator=(const int source);
         TM_Share & operator=(const unsigned int source);
-
+        TM_Share & operator+(TM_Share &tm_source);
+        TM_Share & operator+(const int source);
         friend std::ostream & operator<<(std::ostream &out, const TM_Share &tm_share);
 };
 #endif

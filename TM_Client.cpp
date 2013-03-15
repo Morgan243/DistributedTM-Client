@@ -250,14 +250,16 @@ void TM_Client::Add_Shared_Memory(int t_id, TM_Share shared)
 
 void TM_Client::Add_Shared_Memory(int t_id, vector<TM_Share> shared)
 {
+//{{{
     if(t_id >= 0 && t_id < transactions.size()){
-        for(int i = 0; i < share.size(); i++){
-            shared[i].Register_MessageQueue(&messages);
+        for(int i = 0; i < shared.size(); i++){
+            //cout<<"i:"<<i<<", address:"<<shared[i].Get_Address();
+            //shared[i].Register_MessageQueue(&messages);
             shared[i].Register_Network(&TM_Client::network);
             transactions[t_id].shared_memory.push_back(shared[i]);
         }
     }
-    
+//}}}
 }
 
 void TM_Client::Set_Shared_Memory(int t_id, vector<TM_Share> shared)

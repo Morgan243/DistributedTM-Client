@@ -41,10 +41,11 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Me
     Register_MessageQueue(messages_ref);
 //}}}
 }
+
 void TM_Share::SendMessage(char code, unsigned int address, unsigned int value)
 {
  //{{{
-    char temp_buffer[256];
+    char temp_buffer[1024];
    
     //clear data buffer
     bzero(temp_buffer, sizeof(temp_buffer));
@@ -84,7 +85,6 @@ void TM_Share::ReceiveMessage(char *code, unsigned int *address, unsigned int *v
     *value = (unsigned int)atoi(buffer.substr(pos2+1, buffer.length() - 1).c_str());
 
 //}}}
-
 }
 
 void TM_Share::SendMessage(TM_Message message)
@@ -92,6 +92,11 @@ void TM_Share::SendMessage(TM_Message message)
 //{{{
     //clear data buffer
     bzero(this->out_buffer, sizeof(this->out_buffer));
+    cout<<"Sending..."<<endl;
+    cout<<"\tCode: "<<hex<<(unsigned int)message.code<<endl;
+    cout<<"\tAddress: "<<hex<<message.address<<endl;
+    cout<<"\tValue: "<<hex<<message.value<<endl;
+    cout<<endl;
 
     //get string version of data
     int size = sprintf(this->out_buffer, "%c:%u:%u", message.code, message.address, message.value);
@@ -133,6 +138,7 @@ TM_Message TM_Share::ReceiveMessage()
     cout<<hex<<"\tcode: "<<(unsigned int)in_message.code<<endl;
     cout<<hex<<"\taddr: "<<in_message.address<<endl;
     cout<<hex<<"\tvalue: "<<in_message.value<<endl;
+    cout<<endl;
     #endif
     return in_message;
 //}}}
@@ -163,6 +169,11 @@ void TM_Share::Register_Network(NC_Client *net)
 //}}}
 }
 
+unsigned int TM_Share::Get_Address()
+{
+    return mem_address;
+}
+
 void TM_Share::Declare_Commit()
 {
 //{{{
@@ -185,6 +196,9 @@ void TM_Share::Declare_Commit()
 void TM_Share::TM_Init()
 {
 //{{{
+    #if DEBUG 
+    cout<<"initializing address: "<<mem_address<<endl;
+    #endif
     out_message.code = INIT;
     out_message.address = mem_address;
     out_message.value = 0;
@@ -232,7 +246,6 @@ void TM_Share::TM_Write()
 
     //push it back, oh yeah
     #ifdef DEBUG
-    messages->push(out_message);
     cout<<"Write executed on address "<<this->mem_address<<endl;
     cout<<"\tAlerting TM server..."<<endl;
     #endif
@@ -308,13 +321,15 @@ void TM_Share::TM_Commit()
     
     }
 
-    out_message.address = mem_address;          //to this memory address...
+    out_message.address = this->mem_address;          //to this memory address...
 
     #ifdef DEBUG
     cout<<"\tPusing TM server..."<<endl;
     #endif
 
     TM_Share::SendMessage(out_message);
+
+    TM_Share::ReceiveMessage();
 //}}}
 }
 
@@ -331,19 +346,32 @@ TM_Share & TM_Share::operator=(TM_Share &tm_source)
 
     //notify TM server of read
     tm_source.TM_Read();
+
+    return *(this);
 //}}}
+}
+
+int  TM_Share::toInt()
+{
+    if(isWrite)
+       return new_value;
+    else
+       return mem_value;
 }
 
 //OVERLOAD: TM_Share = int
 TM_Share & TM_Share::operator=(const int source)
 {
 //{{{
+    cout<<"overload share = int"<<endl;
     this->isWrite = true;
 
     this->new_value = (unsigned int) source;
 
     //notofy TM server of write
     this->TM_Write();
+
+    return *this;
 //}}}
 }
 
@@ -357,6 +385,39 @@ TM_Share & TM_Share::operator=(const unsigned int source)
 
     //notify TM server of write
     this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator+(TM_Share &tm_source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value = tm_source.mem_value;
+
+    //notify TM server of write
+    this->TM_Write();
+
+    //notify TM server of read
+    tm_source.TM_Read();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator+(const int source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value = (unsigned int) source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
 //}}}
 }
 

@@ -2,7 +2,7 @@
 #include <vector>
 #include "TM_Client.h"
 
-#define MEM_SIZE 10
+#define MEM_SIZE 4
 
 using namespace std;
 
@@ -24,8 +24,10 @@ int main(int argc, char *argv[])
 {
 //{{{
     int t_id = 0;
+    unsigned int index = 0;
     string user_in;
 
+    void * args = NULL;
     vector<TM_Share> shared_memory;
 
     //create a shared memory element
@@ -40,6 +42,8 @@ int main(int argc, char *argv[])
     if(HandleInput(argc, argv, cmdInput))
         return 0;
 
+    cout<<"name set:"<<cmdInput.transaction<<endl;
+
     //ARGS: auto sync on, address, port 1337
     TM_Client tm_client(true, cmdInput.ipAddress, 1337,cmdInput.coreName );
 
@@ -51,6 +55,8 @@ int main(int argc, char *argv[])
 
         //init memory
         shared_memory.push_back(TM_Share(0,99));
+        
+        args = &index;
     }
     else if(cmdInput.transaction == "increment")
     {
@@ -58,19 +64,25 @@ int main(int argc, char *argv[])
         
         //init memory
         for(int i = 0; i < MEM_SIZE; i++)
-            shared_memory.push_back(TM_Share(0,99));
+            shared_memory.push_back(TM_Share(i,99));
+
+        args = &index;
     }
 
     //register shared memory for use in transaction
-    tm_client.Add_Shared_Memory(t_id, test_mem);
+    tm_client.Add_Shared_Memory(t_id, shared_memory);
 
     cout<<"Proceed?"<<endl;
     cin>>user_in;
 
     if(user_in == "y")
     {
-        //Execute the transaction, will repeat until no conflicts
-        tm_client.Execute_Transaction(t_id, NULL);
+        for(index = 0; index < MEM_SIZE; index++)
+            //Execute the transaction, will repeat until no conflicts
+            tm_client.Execute_Transaction(t_id, args);
+            //index++;
+            //usleep(50000);
+            //tm_client.Execute_Transaction(t_id, args);
     }
 
     cout<<"Enter anything to terminate..."<<endl;
@@ -85,16 +97,25 @@ void * test_transaction(void *args)
 //{{{
     //use the transaction's name to set things up
     BEGIN_T("test")
-        cout<<">>TRANSACTION: Attempting write on [0], [0] = "<<TM.shared_memory[0]<<endl;
-        TM.shared_memory[0] = 2;
-        cout<<"\t>>TRANSACTION: Write completed on [0], [0] = "<<TM.shared_memory[0]<<endl;
+        unsigned int *index = (unsigned int*)args;
+        //cout<<"index is : "<<*index<<endl;
+        //TM.shared_memory[*index] = 2;
+        //cout<<">>TRANSACTION: Attempting write on ["<<*index<<"], ["<<*index<<"] = "<<TM.shared_memory[*index]<<endl;
+        cout<<"Memory["<<*index<<"] = "<<TM.shared_memory[*index] <<endl;
+        //cout<<"\t>>TRANSACTION: Write completed on ["<<*index<<"], ["<<*index<<"] = "<<TM.shared_memory[*index]<<endl;
     END_T
 //}}}
 }
 
 void * incrementer(void *args)
 {
-
+    BEGIN_T("increment")
+        unsigned int *index = (unsigned int*)args;
+        //cout<<"Incrementing address "<<*index<<endl;
+        int value = TM.shared_memory[*index].toInt();
+        //value = TM.shared_memory[*index].toInt();
+        TM.shared_memory[*index] = value + 1;
+    END_T
 }
 
 bool HandleInput(int argc, char *argv[], inputArgs &input){
