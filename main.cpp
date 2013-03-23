@@ -16,6 +16,7 @@ struct inputArgs{
 //transaction function
 void * test_transaction(void *args);
 void * incrementer(void *args);
+void * stall(void *args);
 
 //parse command line arguments
 bool HandleInput(int argc, char *argv[], inputArgs &input);
@@ -54,6 +55,10 @@ int main(int argc, char *argv[])
     {
         t_id = tm_client.Register_Transaction(incrementer, "increment");
     }
+    else if (cmdInput.transaction == "stall")
+    {
+       t_id = tm_client.Register_Transaction(stall, "stall"); 
+    }
 
     //init memory
     for(int i = 0; i < MEM_SIZE; i++)
@@ -86,18 +91,15 @@ void * test_transaction(void *args)
     //use the transaction's name to set things up
     BEGIN_T("test")
         unsigned int *index = (unsigned int*)args;
-        //cout<<"index is : "<<*index<<endl;
-        //TM.shared_memory[*index] = 2;
-        //cout<<">>TRANSACTION: Attempting write on ["<<*index<<"], ["<<*index<<"] = "<<TM.shared_memory[*index]<<endl;
         int value = TM.shared_memory[*index].toInt();
         cout<<"Memory["<<*index<<"] = "<<value <<endl;
-        //cout<<"\t>>TRANSACTION: Write completed on ["<<*index<<"], ["<<*index<<"] = "<<TM.shared_memory[*index]<<endl;
     END_T
 //}}}
 }
 
 void * incrementer(void *args)
 {
+//{{{
     BEGIN_T("increment")
         unsigned int *index = (unsigned int*)args;
         //cout<<"Incrementing address "<<*index<<endl;
@@ -105,6 +107,21 @@ void * incrementer(void *args)
         //value = TM.shared_memory[*index].toInt();
         TM.shared_memory[*index] = value + 1;
     END_T
+//}}}
+}
+
+void * stall(void *args)
+{
+//{{{
+    BEGIN_T("stall")
+    char user_in;
+    unsigned int *index = (unsigned int*)args;
+    int value = TM.shared_memory[*index].toInt();
+    cout<<"Stall on index = "<< *index<<" , value = "<<value<<endl;
+    cout<<"...enter anything to continue..."<<endl;
+    cin>>user_in;
+    END_T
+//}}}
 }
 
 bool HandleInput(int argc, char *argv[], inputArgs &input){
@@ -115,8 +132,8 @@ bool HandleInput(int argc, char *argv[], inputArgs &input){
                 cout<<"Usage:"<<endl;
                 cout<<"-ip\t\t Set ip address of TM server"<<endl;
                 cout<<"-n\t\t Set the name of this client"<<endl;
-                cout<<"-tn\t\t Transaction name to wrong"<<endl;
-                cout<<"\t\t[\"test\",\"increment\"]"<<endl;
+                cout<<"-tn\t\t Transaction name to run"<<endl;
+                cout<<"\t\t[\"test\",\"increment\",\"stall\"]"<<endl;
                 cout<<"-h\t\t Print help (this message)"<<endl;
 
                 return true;
