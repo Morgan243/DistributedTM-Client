@@ -111,7 +111,7 @@ TM_Client::~TM_Client()
     cout<<"Sending SHUTDOWN to server..."<<endl;
     #endif
     
-    TM_Client::network.Send("SHUTDOWN", 8);
+    TM_Client::network.Send("SHUTDOWN", 9);
 //}}}
 }
 
@@ -127,7 +127,7 @@ void TM_Client::Announce_Client_Name()
     if(!TM_Client::name_announced)
     {
         //send name to server
-        TM_Client::network.Send(TM_Client::client_name.c_str(), TM_Client::client_name.length());
+        TM_Client::network.Send(TM_Client::client_name.c_str(), TM_Client::client_name.length() + 1);
     
         TM_Client::name_announced = true;
     }

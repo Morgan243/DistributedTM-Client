@@ -56,7 +56,8 @@ void TM_Share::SendMessage(char code, unsigned int address, unsigned int value)
     //get string version of data
     int size = sprintf(temp_buffer, "%c:%u:%u", code, address, value);
 
-    TM_Share::network->Send(temp_buffer, size);
+    TM_Share::network->Send(temp_buffer, size + 1);
+    cout<<"Sent :"<< temp_buffer<<" (done)"<<endl;
 //}}}
 }
 
@@ -105,8 +106,9 @@ void TM_Share::SendMessage(TM_Message message)
     int size = sprintf(this->out_buffer, "%c:%u:%u", message.code, message.address, message.value);
 
     //cout<<"Message to send: "<<this->out_buffer<<endl;
-
-    TM_Share::network->Send(this->out_buffer, size);
+    cout<<"Messasge compiled as : "<<this->out_buffer<<"(DONE)"<<endl;
+    TM_Share::network->Send(this->out_buffer, size+1);
+    //cout<<"Sending: "<<this->out_buffer<<endl;
 //}}}
 }
 
