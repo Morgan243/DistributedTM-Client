@@ -1,6 +1,6 @@
 #include "TM_Share.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 using namespace std;
 
@@ -21,7 +21,7 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value)
 
     this->mem_address = mem_address;
     this->mem_value = mem_value;
-    #ifdef DEBUG
+    #if DEBUG
     cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
     #endif
 //}}}
@@ -37,7 +37,7 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Me
 
     this->mem_address = mem_address;
     this->mem_value = mem_value;
-    #ifdef DEBUG
+    #if DEBUG
     cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
     #endif
     //store pointer to the message queue
@@ -57,7 +57,9 @@ void TM_Share::SendMessage(char code, unsigned int address, unsigned int value)
     int size = sprintf(temp_buffer, "%c:%u:%u", code, address, value);
 
     TM_Share::network->Send(temp_buffer, size + 1);
-    cout<<"Sent :"<< temp_buffer<<" (done)"<<endl;
+    #if DEBUG
+        cout<<"Sent :"<< temp_buffer<<" (done)"<<endl;
+    #endif
 //}}}
 }
 
@@ -96,17 +98,22 @@ void TM_Share::SendMessage(TM_Message message)
 //{{{
     //clear data buffer
     bzero(this->out_buffer, sizeof(this->out_buffer));
-    cout<<"Sending..."<<endl;
-    cout<<"\tCode: "<<hex<<(unsigned int)message.code<<endl;
-    cout<<"\tAddress: "<<hex<<message.address<<endl;
-    cout<<"\tValue: "<<hex<<message.value<<endl;
-    cout<<endl;
+
+    #if DEBUG
+        cout<<"Sending..."<<endl;
+        cout<<"\tCode: "<<hex<<(unsigned int)message.code<<endl;
+        cout<<"\tAddress: "<<hex<<message.address<<endl;
+        cout<<"\tValue: "<<hex<<message.value<<endl;
+        cout<<endl;
+    #endif
 
     //get string version of data
     int size = sprintf(this->out_buffer, "%c:%u:%u", message.code, message.address, message.value);
 
-    //cout<<"Message to send: "<<this->out_buffer<<endl;
-    cout<<"Messasge compiled as : "<<this->out_buffer<<"(DONE)"<<endl;
+    #if DEBUG
+        cout<<"Messasge compiled as : "<<this->out_buffer<<"(DONE)"<<endl;
+    #endif
+
     TM_Share::network->Send(this->out_buffer, size+1);
     //cout<<"Sending: "<<this->out_buffer<<endl;
 //}}}
@@ -138,12 +145,12 @@ TM_Message TM_Share::ReceiveMessage()
 
     //get the value string and convert it to an integer
     in_message.value = (unsigned int)atoi(in_buffer.substr(pos2+1, in_buffer.length() - 1).c_str());
-    #ifdef DEBUG
+    #if DEBUG
     //display values
-    cout<<hex<<"\tcode: "<<(unsigned int)in_message.code<<endl;
-    cout<<hex<<"\taddr: "<<in_message.address<<endl;
-    cout<<hex<<"\tvalue: "<<in_message.value<<endl;
-    cout<<endl;
+        cout<<hex<<"\tcode: "<<(unsigned int)in_message.code<<endl;
+        cout<<hex<<"\taddr: "<<in_message.address<<endl;
+        cout<<hex<<"\tvalue: "<<in_message.value<<endl;
+        cout<<endl;
     #endif
     return in_message;
 //}}}
@@ -158,8 +165,8 @@ void TM_Share::Register_MessageQueue(queue<TM_Message> *messages_ref)
 {
 //{{{
     this->messages = messages_ref;
-    #ifdef DEBUG
-    cout<<"Message queue registered in shared memory at "<<mem_address<<"..."<<endl;
+    #if DEBUG
+        cout<<"Message queue registered in shared memory at "<<mem_address<<"..."<<endl;
     #endif
 //}}}
 }
@@ -168,8 +175,8 @@ void TM_Share::Register_Network(NC_Client *net)
 {
 //{{{
    TM_Share::network = net;
-   #ifdef DEBUG
-   cout<<"Network registered..."<<endl;
+   #if DEBUG
+       cout<<"Network registered..."<<endl;
    #endif
 //}}}
 }
@@ -202,7 +209,7 @@ void TM_Share::TM_Init()
 {
 //{{{
     #if DEBUG 
-    cout<<"initializing address: "<<mem_address<<endl;
+        cout<<"initializing address: "<<mem_address<<endl;
     #endif
     out_message.code = INIT;
     out_message.address = mem_address;
@@ -242,7 +249,7 @@ void TM_Share::TM_Read()
         TM_Init();
     }
     #ifdef DEBUG
-    cout<<"Read executed on address "<<this->mem_address<<endl;
+        cout<<"Read executed on address "<<this->mem_address<<endl;
     #endif
 //}}}
 }
@@ -256,15 +263,15 @@ void TM_Share::TM_Write()
     out_message.value = new_value;              //get speculative value
 
     //push it back, oh yeah
-    #ifdef DEBUG
-    cout<<"Write executed on address "<<this->mem_address<<endl;
-    cout<<"\tAlerting TM server..."<<endl;
+    #if DEBUG
+        cout<<"Write executed on address "<<this->mem_address<<endl;
+        cout<<"\tAlerting TM server..."<<endl;
     #endif
     
     TM_Share::SendMessage(out_message);
     
-    #ifdef DEBUG
-    cout<<"\tAwaiting approval from server..."<<endl;
+    #if DEBUG
+        cout<<"\tAwaiting approval from server..."<<endl;
     #endif
     
     //in message set and returned here
@@ -294,15 +301,15 @@ void TM_Share::TM_Sync()
     //value shouldn't matter
     out_message.value = 0;                  
 
-    #ifdef DEBUG
-    cout<<"Syncing address "<<out_message.address<<" with server..."<<endl;
-    cout<<"\tContacting server..."<<endl;
+    #if DEBUG
+        cout<<"Syncing address "<<out_message.address<<" with server..."<<endl;
+        cout<<"\tContacting server..."<<endl;
     #endif
 
     TM_Share::SendMessage(out_message);
 
-    #ifdef DEBUG
-    cout<<"Waiting for server sync response..."<<endl;
+    #if DEBUG
+        cout<<"Waiting for server sync response..."<<endl;
     #endif
 
     TM_Share::ReceiveMessage();
@@ -318,8 +325,8 @@ void TM_Share::TM_Commit()
         out_message.code = WRITE | COMMIT;                   //a write was made...
         out_message.value = new_value;              //get speculative value
         
-        #ifdef DEBUG   
-        cout<<"Commiting the changes to address "<<this->mem_address<<endl;
+        #if DEBUG   
+            cout<<"Commiting the changes to address "<<this->mem_address<<endl;
         #endif
     }
     else if(this->isRead)
@@ -327,21 +334,23 @@ void TM_Share::TM_Commit()
         out_message.code = READ | COMMIT;                   //a write was made...
         out_message.value = mem_value;
         
-        #ifdef DEBUG
-        cout<<"Commiting the read finish to address "<<this->mem_address<<endl;
+        #if DEBUG
+            cout<<"Commiting the read finish to address "<<this->mem_address<<endl;
         #endif
     
     }
     else
     {
-        cout<<"No access was made on address "<<this->mem_address<<", nothing to commit..."<<endl;
+        #if DEBUG
+            cout<<"No access was made on address "<<this->mem_address<<", nothing to commit..."<<endl;
+        #endif
         return;
     }
 
     out_message.address = this->mem_address;          //to this memory address...
 
-    #ifdef DEBUG
-    cout<<"\tPushing TM server..."<<endl;
+    #if DEBUG
+        cout<<"\tPushing TM server..."<<endl;
     #endif
 
     TM_Share::SendMessage(out_message);
