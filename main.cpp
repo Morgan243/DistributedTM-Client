@@ -11,6 +11,8 @@ struct inputArgs{
     string ipAddress;
     string coreName;
     string transaction;
+    int memSize;
+    int sleepTime;
 };
 
 //transaction function
@@ -35,6 +37,8 @@ int main(int argc, char *argv[])
         cmdInput.ipAddress = "127.0.0.1";       //default to loopback
         cmdInput.coreName = "Default Name";     //default core name (could use time or rand)
         cmdInput.transaction = "test";          //use simple test by default
+        cmdInput.memSize = MEM_SIZE;            //set default memory size
+        cmdInput.sleepTime = -1;                //default no sleep time used
 
     
     if(HandleInput(argc, argv, cmdInput))
@@ -42,10 +46,10 @@ int main(int argc, char *argv[])
 
     cout<<"name set:"<<cmdInput.transaction<<endl;
 
-    //ARGS: auto sync on, address, port 1337
+    //ARGS: auto sync on, address of server, port 1337
     TM_Client tm_client(true, cmdInput.ipAddress, 1337,cmdInput.coreName );
 
-
+    
     if(cmdInput.transaction == "test")
     {
         //store transaction for later execution, get id in return
@@ -61,7 +65,7 @@ int main(int argc, char *argv[])
     }
 
     //init memory
-    for(int i = 0; i < MEM_SIZE; i++)
+    for(int i = 0; i < cmdInput.memSize; i++)
         shared_memory.push_back(TM_Share(i,0));
 
     args = &index;
@@ -72,10 +76,19 @@ int main(int argc, char *argv[])
     cout<<"Proceed?"<<endl;
     cin>>user_in;
 
-    if(user_in == "y")
+    if(user_in == "y" && cmdInput.sleepTime == -1)
     {
-        for(index = 0; index < MEM_SIZE; index++)
+        for(index = 0; index < cmdInput.memSize; index++)
             tm_client.Execute_Transaction(t_id, args);
+    }
+    else if(user_in == "y" && cmdInput.sleepTime >= 0 )
+    {
+        for(index = 0; index < cmdInput.memSize; index++)
+        {
+            srand(index * cmdInput.sleepTime);
+            tm_client.Execute_Transaction(t_id, args);
+            usleep(rand()%cmdInput.sleepTime);
+        }
     }
 
     cout<<"Enter anything to terminate..."<<endl;
@@ -134,6 +147,8 @@ bool HandleInput(int argc, char *argv[], inputArgs &input){
                 cout<<"-n\t\t Set the name of this client"<<endl;
                 cout<<"-tn\t\t Transaction name to run"<<endl;
                 cout<<"\t\t[\"test\",\"increment\",\"stall\"]"<<endl;
+                cout<<"-m\t\tNumber of memory locations available"<<endl;
+                cout<<"-s\t\t Sleep between transactions for a maximum of N u-seconds"<<endl;
                 cout<<"-h\t\t Print help (this message)"<<endl;
 
                 return true;
@@ -145,6 +160,10 @@ bool HandleInput(int argc, char *argv[], inputArgs &input){
             input.ipAddress = argv[i+1];
         if((strcmp(argv[i],"-n") == 0))
             input.coreName = argv[i+1];
+        if((strcmp(argv[i],"-m") == 0))
+            input.memSize = atoi(argv[i+1]);
+        if((strcmp(argv[i],"-s") == 0))
+            input.sleepTime = atoi(argv[i+1]);
     }
 //}}}
 }
