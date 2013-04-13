@@ -15,6 +15,12 @@ struct inputArgs{
     int sleepTime;
 };
 
+struct TransactionArgs
+{
+    int index;
+    int sleepTime;
+};
+
 //transaction function
 void * test_transaction(void *args);
 void * incrementer(void *args);
@@ -29,8 +35,9 @@ int main(int argc, char *argv[])
     int t_id = 0;
     unsigned int index = 0;
     string user_in;
+    TransactionArgs t_args;
 
-    void * args = NULL;
+    void * args = &t_args;
     vector<TM_Share> shared_memory;
 
     inputArgs cmdInput;
@@ -44,11 +51,12 @@ int main(int argc, char *argv[])
     if(HandleInput(argc, argv, cmdInput))
         return 0;
 
+    t_args.sleepTime = cmdInput.sleepTime;
+
     cout<<"name set:"<<cmdInput.transaction<<endl;
 
     //ARGS: auto sync on, address of server, port 1337
     TM_Client tm_client(true, cmdInput.ipAddress, 1337,cmdInput.coreName );
-
     
     if(cmdInput.transaction == "test")
     {
@@ -68,7 +76,6 @@ int main(int argc, char *argv[])
     for(int i = 0; i < cmdInput.memSize; i++)
         shared_memory.push_back(TM_Share(i,0));
 
-    args = &index;
 
     //register shared memory for use in transaction
     tm_client.Add_Shared_Memory(t_id, shared_memory);
@@ -76,19 +83,10 @@ int main(int argc, char *argv[])
     cout<<"Proceed?"<<endl;
     cin>>user_in;
 
-    if(user_in == "y" && cmdInput.sleepTime == -1)
+    if(user_in == "y")
     {
-        for(index = 0; index < cmdInput.memSize; index++)
+        for(t_args.index = 0; t_args.index < cmdInput.memSize; t_args.index++)
             tm_client.Execute_Transaction(t_id, args);
-    }
-    else if(user_in == "y" && cmdInput.sleepTime >= 0 )
-    {
-        for(index = 0; index < cmdInput.memSize; index++)
-        {
-            srand(index * cmdInput.sleepTime);
-            tm_client.Execute_Transaction(t_id, args);
-            usleep(rand()%cmdInput.sleepTime);
-        }
     }
 
     cout<<"Enter anything to terminate..."<<endl;
@@ -103,9 +101,16 @@ void * test_transaction(void *args)
 //{{{
     //use the transaction's name to set things up
     BEGIN_T("test")
-        unsigned int *index = (unsigned int*)args;
-        int value = TM.shared_memory[*index].toInt();
-        cout<<"Memory["<<*index<<"] = "<<value <<endl;
+        TransactionArgs t_args = *(TransactionArgs*)args;
+        unsigned int index = t_args.index;
+        int value = TM.shared_memory[index].toInt();
+        cout<<"Memory["<<index<<"] = "<<value <<endl;
+
+        if(t_args.sleepTime > 0 )
+        {
+            cout<<"Sleeping..."<<endl;
+            usleep(t_args.sleepTime);
+        }
     END_T
 //}}}
 }
@@ -114,11 +119,16 @@ void * incrementer(void *args)
 {
 //{{{
     BEGIN_T("increment")
-        unsigned int *index = (unsigned int*)args;
-        //cout<<"Incrementing address "<<*index<<endl;
-        int value = TM.shared_memory[*index].toInt();
-        //value = TM.shared_memory[*index].toInt();
-        TM.shared_memory[*index] = value + 1;
+        TransactionArgs t_args = *(TransactionArgs*)args;
+        unsigned int index = t_args.index;
+        int value = TM.shared_memory[index].toInt();
+        TM.shared_memory[index] = value + 1;
+
+        if(t_args.sleepTime > 0 )
+        {
+            cout<<"Sleeping..."<<endl;
+            usleep(t_args.sleepTime);
+        }
     END_T
 //}}}
 }
@@ -128,9 +138,10 @@ void * stall(void *args)
 //{{{
     BEGIN_T("stall")
     char user_in;
-    unsigned int *index = (unsigned int*)args;
-    int value = TM.shared_memory[*index].toInt();
-    cout<<"Stall on index = "<< *index<<" , value = "<<value<<endl;
+    TransactionArgs t_args = *(TransactionArgs*)args;
+    unsigned int index = t_args.index;
+    int value = TM.shared_memory[index].toInt();
+    cout<<"Stall on index = "<< index<<" , value = "<<value<<endl;
     cout<<"...enter anything to continue..."<<endl;
     cin>>user_in;
     END_T
