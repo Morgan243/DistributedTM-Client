@@ -80,6 +80,9 @@ void Transaction::Commit()
         {
            shared_memory[i].TM_Commit(); 
         }
+
+        //tel the server that there is no more data coming, flush the sets
+        TM_Share::End_Commit();
     }
     catch(int error)
     {

@@ -19,6 +19,7 @@
 #define SYNC 0x10
 #define MUTEX 0x20
 #define INIT 0x40
+#define CONTROL 0x80
 
 //Wrap the inside of a transaction function with this (see main for example)
 #define BEGIN_T(name) try{ \
@@ -74,7 +75,11 @@ class TM_Share
 
         unsigned int Get_Address();
 
+        //attempt a commit
         static void Declare_Commit();
+
+        //tell server that there is no more data coming, end commit phase
+        static void End_Commit();
 
         void TM_Init();     //call when first entering a transaction (get fresh value for mem_value member)
         void TM_Read();     //Read occured, don't really need to do anything (maybe notify analysis server)

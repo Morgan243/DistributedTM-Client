@@ -189,7 +189,6 @@ unsigned int TM_Share::Get_Address()
 void TM_Share::Declare_Commit()
 {
 //{{{
-
     char code = COMMIT;
     unsigned int address = 0;
     unsigned int value = 0; //could make this a count or something else useful
@@ -203,6 +202,25 @@ void TM_Share::Declare_Commit()
         throw ABORT;
     }
 //}}}
+}
+
+void TM_Share::End_Commit()
+{
+//{{{
+    char code = COMMIT | CONTROL;
+    unsigned int address = 0;
+    unsigned int value = 0; //could make this a count or something else useful
+
+    TM_Share::SendMessage(code, address, value);
+
+    TM_Share::ReceiveMessage(&code, &address, &value);
+
+    if(code & ABORT)
+    {
+        throw ABORT;
+    }
+//}}}
+
 }
 
 void TM_Share::TM_Init()
@@ -248,7 +266,7 @@ void TM_Share::TM_Read()
         this->isRead = true;
         TM_Init();
     }
-    #ifdef DEBUG
+    #if DEBUG
         cout<<"Read executed on address "<<this->mem_address<<endl;
     #endif
 //}}}
