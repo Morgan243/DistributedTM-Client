@@ -25,6 +25,7 @@ struct TransactionArgs
 void * test_transaction(void *args);
 void * incrementer(void *args);
 void * stall(void *args);
+void * stall_write(void *args);
 
 //parse command line arguments
 bool HandleInput(int argc, char *argv[], inputArgs &input);
@@ -70,6 +71,10 @@ int main(int argc, char *argv[])
     else if (cmdInput.transaction == "stall")
     {
        t_id = tm_client.Register_Transaction(stall, "stall"); 
+    }
+    else if(cmdInput.transaction == "stall-write")
+    {
+        t_id = tm_client.Register_Transaction(stall_write, "stall-write");
     }
 
     //init memory
@@ -148,6 +153,24 @@ void * stall(void *args)
 //}}}
 }
 
+void * stall_write(void *args)
+{
+//{{{
+    BEGIN_T("stall-write")
+    char user_in;
+    TransactionArgs t_args = *(TransactionArgs*)args;
+    unsigned int index = t_args.index;
+    int value = TM.shared_memory[index].toInt();
+    cout<<"Stall WRITE on index = "<< index<<" , value = "<<value<<endl;
+    cout<<"...enter anything to continue..."<<endl;
+    cin>>user_in;
+    TM.shared_memory[index] = value + 1;
+    cout<<"Written, enter anything to attempt commit..."<<endl;
+    cin>>user_in;
+    END_T
+//}}}
+}
+
 bool HandleInput(int argc, char *argv[], inputArgs &input){
 //{{{
     for(int i = 0; i < argc; i++){
@@ -157,7 +180,7 @@ bool HandleInput(int argc, char *argv[], inputArgs &input){
                 cout<<"-ip\t\t Set ip address of TM server"<<endl;
                 cout<<"-n\t\t Set the name of this client"<<endl;
                 cout<<"-tn\t\t Transaction name to run"<<endl;
-                cout<<"\t\t[\"test\",\"increment\",\"stall\"]"<<endl;
+                cout<<"\t\t[\"test\",\"increment\",\"stall\",\"stall-write\"]"<<endl;
                 cout<<"-m\t\tNumber of memory locations available"<<endl;
                 cout<<"-s\t\t Sleep between transactions for a maximum of N u-seconds"<<endl;
                 cout<<"-h\t\t Print help (this message)"<<endl;
@@ -176,5 +199,6 @@ bool HandleInput(int argc, char *argv[], inputArgs &input){
         if((strcmp(argv[i],"-s") == 0))
             input.sleepTime = atoi(argv[i+1]);
     }
+    return false;
 //}}}
 }
