@@ -14,6 +14,7 @@ struct inputArgs{
     int memSize;
     int sleepTime;
     int backoff_delta;
+    bool auto_proceed;
 };
 
 struct TransactionArgs
@@ -49,6 +50,7 @@ int main(int argc, char *argv[])
         cmdInput.memSize = MEM_SIZE;            //set default memory size
         cmdInput.sleepTime = -1;                //default no sleep time used
         cmdInput.backoff_delta = 300;             //default to a 3 u-second incremental backoff
+        cmdInput.auto_proceed = false;
 
     
     if(HandleInput(argc, argv, cmdInput))
@@ -87,17 +89,23 @@ int main(int argc, char *argv[])
     //register shared memory for use in transaction
     tm_client.Add_Shared_Memory(t_id, shared_memory);
 
-    cout<<"Proceed?"<<endl;
-    cin>>user_in;
+    if(!cmdInput.auto_proceed)
+    {
+        cout<<"Proceed?"<<endl;
+        cin>>user_in;
+    }
 
-    if(user_in == "y")
+    if(user_in == "y" || cmdInput.auto_proceed)
     {
         for(t_args.index = 0; t_args.index < cmdInput.memSize; t_args.index++)
             tm_client.Execute_Transaction(t_id, args);
     }
 
-    cout<<"Enter anything to terminate..."<<endl;
-    cin>>user_in;
+    if(!cmdInput.auto_proceed)
+    {
+        cout<<"Enter anything to terminate..."<<endl;
+        cin>>user_in;
+    }
 
     return 0;
 //}}}
@@ -187,6 +195,7 @@ bool HandleInput(int argc, char *argv[], inputArgs &input)
                 cout<<"-m\t\tNumber of memory locations available"<<endl;
                 cout<<"-s\t\t Sleep between transactions for a maximum of N u-seconds"<<endl;
                 cout<<"-b\t\tLinear backoff of aborted transactions (in microseconds)"<<endl;
+                cout<<"-y\t\t Auto proceed, run without user input"<<endl;
                 cout<<"-h\t\t Print help (this message)"<<endl;
 
                 return true;
@@ -204,6 +213,8 @@ bool HandleInput(int argc, char *argv[], inputArgs &input)
             input.sleepTime = atoi(argv[i+1]);
         if((strcmp(argv[i],"-b") == 0))
             input.backoff_delta = atoi(argv[i+1]);
+        if((strcmp(argv[i],"-y") == 0))
+            input.auto_proceed = true;
     }
     return false;
 //}}}
