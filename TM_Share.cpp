@@ -410,7 +410,6 @@ int  TM_Share::toInt()
 TM_Share & TM_Share::operator=(const int source)
 {
 //{{{
-    cout<<"overload share = int"<<endl;
     this->isWrite = true;
 
     this->new_value = (unsigned int) source;

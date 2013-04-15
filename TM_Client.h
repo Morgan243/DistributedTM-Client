@@ -41,6 +41,7 @@ class TM_Client
         //load a function as a transaction, should be: 'void* my_func(void *args)'
         //returns the transaction id (vector index)
         static int Register_Transaction(void *(*transaction)(void *), std::string name);
+        static int Register_Transaction(void *(*transaction)(void *), std::string name, int backoff_delta);
 
         //Run a transaction previously loaded
         static void* Execute_Transaction(int tran_id, void *arg);

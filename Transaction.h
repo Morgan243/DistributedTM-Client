@@ -9,6 +9,8 @@ class Transaction
         int abort_count = 0;
 
     public:
+        int backoff_increment = 0, backoff_time = 0;
+
         std::string name = "NAME_UNSET";
 
         //pointer to a function accepts a void pointer and returns a void pointer

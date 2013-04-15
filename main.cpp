@@ -13,6 +13,7 @@ struct inputArgs{
     string transaction;
     int memSize;
     int sleepTime;
+    int backoff_delta;
 };
 
 struct TransactionArgs
@@ -47,6 +48,7 @@ int main(int argc, char *argv[])
         cmdInput.transaction = "test";          //use simple test by default
         cmdInput.memSize = MEM_SIZE;            //set default memory size
         cmdInput.sleepTime = -1;                //default no sleep time used
+        cmdInput.backoff_delta = 300;             //default to a 3 u-second incremental backoff
 
     
     if(HandleInput(argc, argv, cmdInput))
@@ -62,19 +64,19 @@ int main(int argc, char *argv[])
     if(cmdInput.transaction == "test")
     {
         //store transaction for later execution, get id in return
-        t_id = tm_client.Register_Transaction(test_transaction, "test");
+        t_id = tm_client.Register_Transaction(test_transaction, "test", cmdInput.backoff_delta);
     }
     else if(cmdInput.transaction == "increment")
     {
-        t_id = tm_client.Register_Transaction(incrementer, "increment");
+        t_id = tm_client.Register_Transaction(incrementer, "increment", cmdInput.backoff_delta);
     }
     else if (cmdInput.transaction == "stall")
     {
-       t_id = tm_client.Register_Transaction(stall, "stall"); 
+       t_id = tm_client.Register_Transaction(stall, "stall", cmdInput.backoff_delta); 
     }
     else if(cmdInput.transaction == "stall-write")
     {
-        t_id = tm_client.Register_Transaction(stall_write, "stall-write");
+        t_id = tm_client.Register_Transaction(stall_write, "stall-write", cmdInput.backoff_delta);
     }
 
     //init memory
@@ -171,7 +173,8 @@ void * stall_write(void *args)
 //}}}
 }
 
-bool HandleInput(int argc, char *argv[], inputArgs &input){
+bool HandleInput(int argc, char *argv[], inputArgs &input)
+{
 //{{{
     for(int i = 0; i < argc; i++){
         if((strcmp(argv[i],"-h") == 0))
@@ -183,6 +186,7 @@ bool HandleInput(int argc, char *argv[], inputArgs &input){
                 cout<<"\t\t[\"test\",\"increment\",\"stall\",\"stall-write\"]"<<endl;
                 cout<<"-m\t\tNumber of memory locations available"<<endl;
                 cout<<"-s\t\t Sleep between transactions for a maximum of N u-seconds"<<endl;
+                cout<<"-b\t\tLinear backoff of aborted transactions (in microseconds)"<<endl;
                 cout<<"-h\t\t Print help (this message)"<<endl;
 
                 return true;
@@ -198,6 +202,8 @@ bool HandleInput(int argc, char *argv[], inputArgs &input){
             input.memSize = atoi(argv[i+1]);
         if((strcmp(argv[i],"-s") == 0))
             input.sleepTime = atoi(argv[i+1]);
+        if((strcmp(argv[i],"-b") == 0))
+            input.backoff_delta = atoi(argv[i+1]);
     }
     return false;
 //}}}

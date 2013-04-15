@@ -164,6 +164,39 @@ int TM_Client::Register_Transaction(void *(*transaction)(void *), string name)
 //}}}
 }
 
+int TM_Client::Register_Transaction(void *(*transaction)(void *), string name, int backoff_delta)
+{
+//{{{
+    //use temp transaction to creatd the transaction for the vector
+    temp_transaction.name = name;
+
+    //make sure we aren't being f*cked with
+    if(transaction != NULL)
+    {
+        //assign function pointer
+        temp_transaction.transaction = transaction;
+
+        //added to the BLOT (big list of transactions)
+        transactions.push_back(temp_transaction);
+        #ifdef DEBUG
+            cout<<"Transaction "<<name<<" with id "<< transactions.size() - 1<<" registered..."<<endl;
+        #endif
+
+        transactions.back().backoff_increment = backoff_delta;
+
+        //return the transaction id
+        return transactions.size() - 1;
+    }
+    else
+    {
+        #ifdef DEBUG
+            cout<<"Error registering transaction..."<<endl;
+        #endif
+        return -1; 
+    }
+//}}}
+}
+
 void* TM_Client::Execute_Transaction(int tran_id, void *arg)
 {
 //{{{
@@ -179,6 +212,7 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
             return transactions[tran_id].transaction(arg);
 
             wasAborted = false;
+            transactions[tran_id].backoff_time = 0;
         }
         catch(int error) //catch a conflict exception
         {
@@ -187,6 +221,14 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
 
             //count the aborts
             transactions[tran_id].Increment_Abort_Count();
+
+            cout<<"Transaction aborted, total aborts: "<< transactions[tran_id].Get_Abort_Count()<<endl;;
+
+            if(transactions[tran_id].backoff_increment > 0)
+            {
+                transactions[tran_id].backoff_time += transactions[tran_id].backoff_increment;
+                usleep(transactions[tran_id].backoff_time);
+            }
         }
     }
     while(wasAborted); //keep trying until it isn't aborted
