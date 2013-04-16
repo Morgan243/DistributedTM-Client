@@ -25,7 +25,7 @@ struct TransactionArgs
 };
 
 //transaction function
-void * test_transaction(void *args);
+void * reader(void *args);
 void * incrementer(void *args);
 void * stall(void *args);
 void * stall_write(void *args);
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     if(cmdInput.transaction == "test")
     {
         //store transaction for later execution, get id in return
-        t_id = tm_client.Register_Transaction(test_transaction, "test", cmdInput.backoff_delta);
+        t_id = tm_client.Register_Transaction(reader, "reader", cmdInput.backoff_delta);
     }
     else if(cmdInput.transaction == "increment")
     {
@@ -116,11 +116,11 @@ int main(int argc, char *argv[])
 //}}}
 }
 
-void * test_transaction(void *args)
+void * reader(void *args)
 {
 //{{{
     //use the transaction's name to set things up
-    BEGIN_T("test")
+    BEGIN_T("reader")
         TransactionArgs t_args = *(TransactionArgs*)args;
         unsigned int index = t_args.index;
         int value = TM.shared_memory[index].toInt();
