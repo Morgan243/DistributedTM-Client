@@ -14,6 +14,7 @@ struct inputArgs{
     int memSize;
     int sleepTime;
     int backoff_delta;
+    int rerun;
     bool auto_proceed;
 };
 
@@ -49,8 +50,9 @@ int main(int argc, char *argv[])
         cmdInput.transaction = "test";          //use simple test by default
         cmdInput.memSize = MEM_SIZE;            //set default memory size
         cmdInput.sleepTime = -1;                //default no sleep time used
-        cmdInput.backoff_delta = 300;             //default to a 3 u-second incremental backoff
-        cmdInput.auto_proceed = false;
+        cmdInput.backoff_delta = 300;           //default to a 3 u-second incremental backoff
+        cmdInput.auto_proceed = false;          //default requires user interaction
+        cmdInput.rerun = 1;                     //default run the selected transaction once
 
     
     if(HandleInput(argc, argv, cmdInput))
@@ -89,16 +91,19 @@ int main(int argc, char *argv[])
     //register shared memory for use in transaction
     tm_client.Add_Shared_Memory(t_id, shared_memory);
 
-    if(!cmdInput.auto_proceed)
+    for(int i = 0; i < cmdInput.rerun; i++)
     {
-        cout<<"Proceed?"<<endl;
-        cin>>user_in;
-    }
+        if(!cmdInput.auto_proceed)
+        {
+            cout<<"Proceed?"<<endl;
+            cin>>user_in;
+        }
 
-    if(user_in == "y" || cmdInput.auto_proceed)
-    {
-        for(t_args.index = 0; t_args.index < cmdInput.memSize; t_args.index++)
-            tm_client.Execute_Transaction(t_id, args);
+        if(user_in == "y" || cmdInput.auto_proceed)
+        {
+            for(t_args.index = 0; t_args.index < cmdInput.memSize; t_args.index++)
+                tm_client.Execute_Transaction(t_id, args);
+        }
     }
 
     if(!cmdInput.auto_proceed)
@@ -196,6 +201,7 @@ bool HandleInput(int argc, char *argv[], inputArgs &input)
                 cout<<"-s\t\t Sleep between transactions for a maximum of N u-seconds"<<endl;
                 cout<<"-b\t\tLinear backoff of aborted transactions (in microseconds)"<<endl;
                 cout<<"-y\t\t Auto proceed, run without user input"<<endl;
+                cout<<"-r\t\tRerun the selected transaction N times"<<endl;
                 cout<<"-h\t\t Print help (this message)"<<endl;
 
                 return true;
@@ -215,6 +221,8 @@ bool HandleInput(int argc, char *argv[], inputArgs &input)
             input.backoff_delta = atoi(argv[i+1]);
         if((strcmp(argv[i],"-y") == 0))
             input.auto_proceed = true;
+        if((strcmp(argv[i],"-r") == 0))
+            input.rerun = atoi(argv[i+1]);
     }
     return false;
 //}}}
