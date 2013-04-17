@@ -16,6 +16,7 @@ struct inputArgs{
     int sleepTime;
     int backoff_delta;
     int rerun;
+    int *fourier_iters;
     bool auto_proceed;
     StoreType data_type;
 };
@@ -63,15 +64,15 @@ int main(int argc, char *argv[])
         cmdInput.auto_proceed = false;          //default requires user interaction
         cmdInput.rerun = 1;                     //default run the selected transaction once
         cmdInput.data_type = integer;           //default to integer runtime data types
+        cmdInput.fourier_iters = new int[5] {2,6,20,100,1000};
 
-    
     if(HandleInput(argc, argv, cmdInput))
         return 0;
 
     t_args.sleepTime = cmdInput.sleepTime;
     t_args.iterations = 100;
     t_args.time = 0;
-    t_args.dt = .01;
+    t_args.dt = .001;
 
     cout<<"name set:"<<cmdInput.transaction<<endl;
 
@@ -133,7 +134,17 @@ int main(int argc, char *argv[])
             cin>>user_in;
         }
 
-        if(user_in == "y" || cmdInput.auto_proceed)
+        if((user_in == "y" || cmdInput.auto_proceed) && cmdInput.transaction == "fourier")
+        {
+            for(int j = 0; j < 5; j++)
+            {       
+                t_args.iterations = cmdInput.fourier_iters[j];
+
+                for(t_args.index = 0; t_args.index < cmdInput.memSize; t_args.index++)
+                    tm_client.Execute_Transaction(t_id, args);
+            }
+        }
+        else if(user_in == "y" || cmdInput.auto_proceed)
         {
             for(t_args.index = 0; t_args.index < cmdInput.memSize; t_args.index++)
                 tm_client.Execute_Transaction(t_id, args);
@@ -267,8 +278,6 @@ void * fourier(void * args)
     unsigned int index = t_args.index;
     TM.shared_memory[index].setFloat(.5);
     float value = TM.shared_memory[index].toFloat();
-    cout<<"value: "<< value<<endl;
-
     t_args.time += (t_args.dt * (float) index);
         for(int i = 1; i < t_args.iterations; i++)
         {
@@ -276,7 +285,13 @@ void * fourier(void * args)
         }
 
     TM.shared_memory[index].setFloat(value);
-    cout<<"Fourier: "<< value<<endl;
+    cout<<"Fourier: "<< value<<endl; 
+
+    if(t_args.sleepTime > 0 )
+        {
+            cout<<"Sleeping..."<<endl;
+            usleep(t_args.sleepTime);
+        }
     END_T
 //}}}
 }
