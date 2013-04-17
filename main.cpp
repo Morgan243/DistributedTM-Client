@@ -26,8 +26,11 @@ struct TransactionArgs
     int index;
     int sleepTime;
     int iterations;
+    int iterations_index;
+    int maxIndex;
     float time;
     float dt;
+    int current_index;
 };
 
 //transaction function
@@ -38,6 +41,7 @@ void * incrementer_fl(void *args);
 void * stall(void *args);
 void * stall_write(void *args);
 
+void * fourier_index(void * args);
 void * fourier(void * args);
 
 //parse command line arguments
@@ -46,7 +50,7 @@ bool HandleInput(int argc, char *argv[], inputArgs &input);
 int main(int argc, char *argv[])
 {
 //{{{
-    int t_id = 0;
+    int t_id = 0, t_id2 = 0;
     unsigned int index = 0;
     string user_in;
     TransactionArgs t_args;
@@ -73,6 +77,8 @@ int main(int argc, char *argv[])
     t_args.iterations = 100;
     t_args.time = 0;
     t_args.dt = .001;
+    t_args.maxIndex = cmdInput.memSize - 1;
+    t_args.iterations_index = 0;
 
     cout<<"name set:"<<cmdInput.transaction<<endl;
 
@@ -107,6 +113,7 @@ int main(int argc, char *argv[])
     else if(cmdInput.transaction == "fourier")
     {
         t_id = tm_client.Register_Transaction(fourier, "fourier", cmdInput.backoff_delta);
+        t_id2 = tm_client.Register_Transaction(fourier_index, "fourier_index", cmdInput.backoff_delta);
         TM_Client::setAbortReturn(true);
     }
 
@@ -126,6 +133,7 @@ int main(int argc, char *argv[])
     //register shared memory for use in transaction
     tm_client.Add_Shared_Memory(t_id, shared_memory);
 
+
     for(int i = 0; i < cmdInput.rerun; i++)
     {
         if(!cmdInput.auto_proceed)
@@ -136,12 +144,18 @@ int main(int argc, char *argv[])
 
         if((user_in == "y" || cmdInput.auto_proceed) && cmdInput.transaction == "fourier")
         {
-            for(int j = 0; j < 5; j++)
-            {       
-                t_args.iterations = cmdInput.fourier_iters[j];
+            tm_client.Add_Shared_Memory(t_id2, shared_memory);
 
-                for(t_args.index = 0; t_args.index < cmdInput.memSize; t_args.index++)
-                    tm_client.Execute_Transaction(t_id, args);
+            while(t_args.iterations_index < 5)
+            {
+                cout<<"index: "<<t_args.current_index<<", iteration index: "<<t_args.iterations_index<<", time: "<<t_args.time<<endl;
+                //get an index and iteration index
+                tm_client.Execute_Transaction(t_id2, args);
+
+                //set iterations
+                t_args.iterations = cmdInput.fourier_iters[t_args.iterations_index];
+
+                tm_client.Execute_Transaction(t_id, args);
             }
         }
         else if(user_in == "y" || cmdInput.auto_proceed)
@@ -156,6 +170,9 @@ int main(int argc, char *argv[])
         cout<<"Enter anything to terminate..."<<endl;
         cin>>user_in;
     }
+
+    cout<<"Total Abort: "<<TM_Client::GetTotalAborts()<<endl;
+    cout<<"Total Commit: "<<TM_Client::GetTotalCommits()<<endl;
 
     return 0;
 //}}}
@@ -270,21 +287,48 @@ void * stall_write(void *args)
 //}}}
 }
 
+void * fourier_index(void * args)
+{
+BEGIN_T("fourier_index")
+    TransactionArgs *t_args = (TransactionArgs*)args;
+
+     float currentIndex =  TM.shared_memory[t_args->maxIndex].toFloat();
+     t_args->iterations_index = TM.shared_memory[t_args->maxIndex - 1].toFloat();
+
+    //if still more to go, increment index for the next node
+    if(currentIndex < t_args->maxIndex - 2)
+    {
+        TM.shared_memory[t_args->maxIndex].setFloat(currentIndex + 1);
+        cout<<"Inceremtented current index..."<<endl;
+    }
+    else
+    {
+        TM.shared_memory[t_args->maxIndex].setFloat(0);
+        TM.shared_memory[t_args->maxIndex - 1].setFloat(t_args->iterations_index + 1);
+        cout<<"Set current index to zero!!!"<<endl;
+    }
+
+    t_args->current_index = (float)currentIndex;
+END_T
+}
+
 void * fourier(void * args)
 {
 //{{{
     BEGIN_T("fourier")
     TransactionArgs t_args = *(TransactionArgs*)args;
-    unsigned int index = t_args.index;
-    TM.shared_memory[index].setFloat(.5);
-    float value = TM.shared_memory[index].toFloat();
-    t_args.time += (t_args.dt * (float) index);
+    TM.shared_memory[t_args.current_index].setFloat(.5);
+
+    float value = TM.shared_memory[t_args.current_index].toFloat();
+
+    t_args.time = (t_args.dt * (float) t_args.current_index);
+
         for(int i = 1; i < t_args.iterations; i++)
         {
             value += (2.0/3.141)*(1.0/i)*sin((i*3.141)/2.0)*cos(i*3.141*t_args.time);
         }
 
-    TM.shared_memory[index].setFloat(value);
+    TM.shared_memory[t_args.current_index].setFloat(value);
     cout<<"Fourier: "<< value<<endl; 
 
     if(t_args.sleepTime > 0 )

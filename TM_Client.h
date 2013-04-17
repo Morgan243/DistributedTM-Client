@@ -68,4 +68,7 @@ class TM_Client
         //Get the transaction object using transaction id or name
         static Transaction Get_Transaction(int t_id);
         static Transaction Get_Transaction(std::string name);
+
+        static int GetTotalAborts();
+        static int GetTotalCommits();
 };

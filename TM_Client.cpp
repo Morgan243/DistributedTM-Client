@@ -236,6 +236,7 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
 //{{{
     //local variable to keep loop going (should be move to transaction class)
     bool wasAborted = false;
+    void * ret_val;
 
     do
     {
@@ -243,10 +244,13 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
         try
         {
             //attempt the transaction
-            return transactions[tran_id].transaction(arg);
+            ret_val =  transactions[tran_id].transaction(arg);
 
             wasAborted = false;
             transactions[tran_id].backoff_time = 0;
+            transactions[tran_id].Increment_Commit_Count();
+
+            return ret_val;
         }
         catch(int error) //catch a conflict exception
         {
@@ -269,6 +273,7 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
         }
     }
     while(wasAborted); //keep trying until it isn't aborted
+
 //}}}
 }
 
@@ -410,4 +415,24 @@ void TM_Client::StartNetwork()
         }
     }
 //}}}
+}
+
+int TM_Client::GetTotalAborts()
+{
+    int total = 0;
+    for(int i = 0; i < transactions.size(); i++)
+    {
+        total += transactions[i].Get_Abort_Count();
+    }
+    return total;
+}
+
+int TM_Client::GetTotalCommits()
+{
+    int total = 0;
+    for(int i = 0; i < transactions.size(); i++)
+    {
+        total += transactions[i].Get_Commit_Count();
+    }
+    return total;
 }
