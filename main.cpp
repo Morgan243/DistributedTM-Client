@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <math.h>
 #include "TM_Client.h"
 
 #define MEM_SIZE 4
@@ -16,19 +17,27 @@ struct inputArgs{
     int backoff_delta;
     int rerun;
     bool auto_proceed;
+    StoreType data_type;
 };
 
 struct TransactionArgs
 {
     int index;
     int sleepTime;
+    int iterations;
+    float time;
+    float dt;
 };
 
 //transaction function
 void * reader(void *args);
+void * reader_fl(void *args);
 void * incrementer(void *args);
+void * incrementer_fl(void *args);
 void * stall(void *args);
 void * stall_write(void *args);
+
+void * fourier(void * args);
 
 //parse command line arguments
 bool HandleInput(int argc, char *argv[], inputArgs &input);
@@ -53,17 +62,21 @@ int main(int argc, char *argv[])
         cmdInput.backoff_delta = 300;           //default to a 3 u-second incremental backoff
         cmdInput.auto_proceed = false;          //default requires user interaction
         cmdInput.rerun = 1;                     //default run the selected transaction once
+        cmdInput.data_type = integer;           //default to integer runtime data types
 
     
     if(HandleInput(argc, argv, cmdInput))
         return 0;
 
     t_args.sleepTime = cmdInput.sleepTime;
+    t_args.iterations = 100;
+    t_args.time = 0;
+    t_args.dt = .01;
 
     cout<<"name set:"<<cmdInput.transaction<<endl;
 
     //ARGS: auto sync on, address of server, port 1337
-    TM_Client tm_client(true, cmdInput.ipAddress, 1337,cmdInput.coreName );
+    TM_Client tm_client(true, cmdInput.ipAddress, 1337, cmdInput.coreName );
     
     if(cmdInput.transaction == "test")
     {
@@ -74,6 +87,14 @@ int main(int argc, char *argv[])
     {
         t_id = tm_client.Register_Transaction(incrementer, "increment", cmdInput.backoff_delta);
     }
+    else if(cmdInput.transaction == "increment_fl")
+    {
+        t_id = tm_client.Register_Transaction(incrementer_fl, "increment_fl", cmdInput.backoff_delta);
+    }
+    else if(cmdInput.transaction == "reader_fl")
+    {
+        t_id = tm_client.Register_Transaction(reader_fl, "reader_fl", cmdInput.backoff_delta);
+    }
     else if (cmdInput.transaction == "stall")
     {
        t_id = tm_client.Register_Transaction(stall, "stall", cmdInput.backoff_delta); 
@@ -82,10 +103,23 @@ int main(int argc, char *argv[])
     {
         t_id = tm_client.Register_Transaction(stall_write, "stall-write", cmdInput.backoff_delta);
     }
+    else if(cmdInput.transaction == "fourier")
+    {
+        t_id = tm_client.Register_Transaction(fourier, "fourier", cmdInput.backoff_delta);
+        TM_Client::setAbortReturn(true);
+    }
 
     //init memory
-    for(int i = 0; i < cmdInput.memSize; i++)
-        shared_memory.push_back(TM_Share(i,0));
+    if(cmdInput.data_type == integer)
+    {
+        for(int i = 0; i < cmdInput.memSize; i++)
+            shared_memory.push_back(TM_Share(i, 0));
+    }
+    else if(cmdInput.data_type == float_real)
+    {
+        for(int i = 0; i < cmdInput.memSize; i++)
+            shared_memory.push_back(TM_Share(i, 0.0, true));
+    }
 
 
     //register shared memory for use in transaction
@@ -153,6 +187,45 @@ void * incrementer(void *args)
 //}}}
 }
 
+void * reader_fl(void *args)
+{
+//{{{
+    //use the transaction's name to set things up
+    BEGIN_T("reader_fl")
+        TransactionArgs t_args = *(TransactionArgs*)args;
+        unsigned int index = t_args.index;
+        float value = TM.shared_memory[index].toFloat();
+        cout<<"Memory Float["<<index<<"] = "<<value <<endl;
+
+        if(t_args.sleepTime > 0 )
+        {
+            cout<<"Sleeping..."<<endl;
+            usleep(t_args.sleepTime);
+        }
+    END_T
+//}}}
+}
+
+void * incrementer_fl(void *args)
+{
+//{{{
+    BEGIN_T("increment_fl")
+        TransactionArgs t_args = *(TransactionArgs*)args;
+        unsigned int index = t_args.index;
+        float value = TM.shared_memory[index].toFloat();
+        TM.shared_memory[index].setFloat(value + 1.5);
+
+        cout<<"Value now: "<<TM.shared_memory[index].toFloat();
+
+        if(t_args.sleepTime > 0 )
+        {
+            cout<<"Sleeping..."<<endl;
+            usleep(t_args.sleepTime);
+        }
+    END_T
+//}}}
+}
+
 void * stall(void *args)
 {
 //{{{
@@ -186,6 +259,28 @@ void * stall_write(void *args)
 //}}}
 }
 
+void * fourier(void * args)
+{
+//{{{
+    BEGIN_T("fourier")
+    TransactionArgs t_args = *(TransactionArgs*)args;
+    unsigned int index = t_args.index;
+    TM.shared_memory[index].setFloat(.5);
+    float value = TM.shared_memory[index].toFloat();
+    cout<<"value: "<< value<<endl;
+
+    t_args.time += (t_args.dt * (float) index);
+        for(int i = 1; i < t_args.iterations; i++)
+        {
+            value += (2.0/3.141)*(1.0/i)*sin((i*3.141)/2.0)*cos(i*3.141*t_args.time);
+        }
+
+    TM.shared_memory[index].setFloat(value);
+    cout<<"Fourier: "<< value<<endl;
+    END_T
+//}}}
+}
+
 bool HandleInput(int argc, char *argv[], inputArgs &input)
 {
 //{{{
@@ -196,12 +291,14 @@ bool HandleInput(int argc, char *argv[], inputArgs &input)
                 cout<<"-ip\t\t Set ip address of TM server"<<endl;
                 cout<<"-n\t\t Set the name of this client"<<endl;
                 cout<<"-tn\t\t Transaction name to run"<<endl;
-                cout<<"\t\t[\"test\",\"increment\",\"stall\",\"stall-write\"]"<<endl;
+                cout<<"\t\t[\"test\",\"increment\",\"stall\",\"stall-write\", \"fourier\"]"<<endl;
                 cout<<"-m\t\tNumber of memory locations available"<<endl;
                 cout<<"-s\t\t Sleep between transactions for a maximum of N u-seconds"<<endl;
                 cout<<"-b\t\tLinear backoff of aborted transactions (in microseconds)"<<endl;
                 cout<<"-y\t\t Auto proceed, run without user input"<<endl;
                 cout<<"-r\t\tRerun the selected transaction N times"<<endl;
+                cout<<"-type\t\tSelect data type of shared memory"<<endl;
+                cout<<"\t\t[\"int\",\"float\"]"<<endl;
                 cout<<"-h\t\t Print help (this message)"<<endl;
 
                 return true;
@@ -223,6 +320,15 @@ bool HandleInput(int argc, char *argv[], inputArgs &input)
             input.auto_proceed = true;
         if((strcmp(argv[i],"-r") == 0))
             input.rerun = atoi(argv[i+1]);
+        if((strcmp(argv[i],"-type") == 0))
+        {
+            cout<<"Type detected..."<<endl;
+            if((strcmp(argv[i+1],"int") == 0))
+                input.data_type = integer;
+            if((strcmp(argv[i+1],"float") == 0))
+                input.data_type = float_real;
+        }
+
     }
     return false;
 //}}}

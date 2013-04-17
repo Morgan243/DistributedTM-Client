@@ -21,6 +21,8 @@
 #define INIT 0x40
 #define CONTROL 0x80
 
+enum StoreType {integer, float_real, double_real};
+
 //Wrap the inside of a transaction function with this (see main for example)
 #define BEGIN_T(name) try{ \
     Transaction TM = TM_Client::Get_Transaction(name);\
@@ -36,12 +38,14 @@ struct TM_Message
     unsigned char code;         //encoded request: read, write, commit attempt, or mutually exclusive access (standard lock)
     unsigned int address;       
     unsigned int value;
+    float value_fl;
 };
 
 
 class TM_Share
 {
     private:
+        static StoreType store_type;
         char out_buffer[1024];                          //out bout messages sprintf() into this buffer
         std::string in_buffer;                          //inbound messages come into this string
         bool auto_sync;                                 //Synchronize on every mem access transparently?
@@ -51,6 +55,7 @@ class TM_Share
 
         unsigned int mem_address;                       //what TM address is represented
         unsigned int mem_value, new_value;              //whats the actual value/data of this address (should probably buffer)
+        float mem_value_fl, new_value_fl;
 
         std::queue<TM_Message> *messages;               //reference to the clients queue of outgoing messages to the server
         TM_Message out_message, in_message;             //temporary message for building the vector
@@ -58,15 +63,22 @@ class TM_Share
 
         static void SendMessage(char code, unsigned int address, unsigned int value);
         static void ReceiveMessage(char *code, unsigned int *address, unsigned int *value);
+
+        static void SendMessage(char code, unsigned int address, float value);
+        static void ReceiveMessage(char *code, unsigned int *address, float *value);
+
         void SendMessage(TM_Message message);           //parse and send a single message using the NC_Client 
         TM_Message ReceiveMessage();                    //receive data from server; continue, abort, commit success, etc.
 
     public:
         //lock for the vector reference of the vector queue (needed?)
-        static std::mutex queue_lock;
+        //static std::mutex queue_lock;
 
         TM_Share(unsigned int mem_address, unsigned int mem_value);
         TM_Share(unsigned int mem_address, unsigned int mem_value, std::queue<TM_Message> *messages_ref);
+
+        TM_Share(unsigned int mem_address, float mem_value, bool float_type);
+        TM_Share(unsigned int mem_address, float mem_value, std::queue<TM_Message> *messages_ref, bool float_type);
 
         void Set_Auto_Sync(bool autoSync);
 
@@ -91,13 +103,16 @@ class TM_Share
         //overloads
         //---------------
         int toInt();
+        float toFloat();
     
         //assigning one share to another (note right side is NOT constant)
         TM_Share & operator=(TM_Share &tm_source);
+        TM_Share & operator+(TM_Share &tm_source);
         TM_Share & operator=(const int source);
         TM_Share & operator=(const unsigned int source);
-        TM_Share & operator+(TM_Share &tm_source);
         TM_Share & operator+(const int source);
+        
+        void setFloat(float val);
         friend std::ostream & operator<<(std::ostream &out, TM_Share &tm_share);
 };
 #endif
