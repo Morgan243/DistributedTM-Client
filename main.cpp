@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 
             while(t_args.iterations_index < 5)
             {
-                cout<<"index: "<<t_args.current_index<<", iteration index: "<<t_args.iterations_index<<", time: "<<t_args.time<<endl;
+                //cout<<"index: "<<t_args.current_index<<", iteration index: "<<t_args.iterations_index<<", time: "<<t_args.time<<endl;
                 //get an index and iteration index
                 tm_client.Execute_Transaction(t_id2, args);
 
@@ -293,10 +293,10 @@ BEGIN_T("fourier_index")
     TransactionArgs *t_args = (TransactionArgs*)args;
 
      float currentIndex =  TM.shared_memory[t_args->maxIndex].toFloat();
-     t_args->iterations_index = TM.shared_memory[t_args->maxIndex - 1].toFloat();
+     t_args->iterations_index = (int)TM.shared_memory[t_args->maxIndex - 1].toFloat();
 
     //if still more to go, increment index for the next node
-    if(currentIndex < t_args->maxIndex - 2)
+    if(currentIndex < t_args->maxIndex - 3)
     {
         TM.shared_memory[t_args->maxIndex].setFloat(currentIndex + 1);
         cout<<"Inceremtented current index..."<<endl;
@@ -308,7 +308,7 @@ BEGIN_T("fourier_index")
         cout<<"Set current index to zero!!!"<<endl;
     }
 
-    t_args->current_index = (float)currentIndex;
+    t_args->current_index = (int)currentIndex;
 END_T
 }
 
