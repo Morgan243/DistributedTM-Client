@@ -101,6 +101,30 @@ TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt, string
 //}}}
 }
 
+void TM_Client::Init(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName)
+{
+ //{{{
+    TM_Client::name_announced = false;
+    TM_Client::done = false;
+    TM_Client::auto_sync = autoSync;
+
+    TM_Client::host_address = hostAddress;
+    TM_Client::port = prt;
+
+    //intialize network using user specified host settings
+    TM_Client::network.Init(false, TM_Client::host_address, TM_Client::port);
+
+    TM_Client::network.Connect();
+
+    //give TM_Share access to the network
+    TM_Share::Register_Network(&TM_Client::network);
+
+    TM_Client::Set_Client_Name(clientName);
+
+    TM_Client::Announce_Client_Name();
+//}}}  
+}
+
 TM_Client::~TM_Client()
 {
 //{{{

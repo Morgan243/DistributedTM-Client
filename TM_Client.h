@@ -33,6 +33,8 @@ class TM_Client
         TM_Client(bool autoSync);
         TM_Client(bool autoSync, std::string host_address, unsigned int port);
         TM_Client(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName);
+        void Init(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName);
+
         ~TM_Client();
 
         void Set_Client_Name(std::string clientName);
