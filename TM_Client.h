@@ -12,7 +12,8 @@ class TM_Client
     private:
         static bool done,                               //stop everything
                     auto_sync,                          //sync on every mem access or manually
-                    name_announced;
+                    name_announced,
+                    abort_return;
 
         static std::string client_name;                 //friendly name for the client
         static std::string host_address;                //adress of TM server
@@ -33,9 +34,12 @@ class TM_Client
         TM_Client(bool autoSync);
         TM_Client(bool autoSync, std::string host_address, unsigned int port);
         TM_Client(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName);
+        TM_Client(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName, bool abort_return);
+        ~TM_Client();
+
         void Init(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName);
 
-        ~TM_Client();
+        static void setAbortReturn(bool abrt_ret);
 
         void Set_Client_Name(std::string clientName);
         void Announce_Client_Name();
@@ -66,4 +70,7 @@ class TM_Client
         //Get the transaction object using transaction id or name
         static Transaction Get_Transaction(int t_id);
         static Transaction Get_Transaction(std::string name);
+
+        static int GetTotalAborts();
+        static int GetTotalCommits();
 };

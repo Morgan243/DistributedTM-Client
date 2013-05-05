@@ -11,6 +11,7 @@ using namespace std;
     bool TM_Client::done;
     bool TM_Client::auto_sync;
     bool TM_Client::name_announced;
+    bool TM_Client::abort_return;
 
     string TM_Client::client_name;
 
@@ -48,6 +49,7 @@ TM_Client::TM_Client(bool autoSync)
     TM_Client::name_announced = false;
     TM_Client::done = false;
     TM_Client::auto_sync = autoSync;
+    TM_Client::abort_return = false;
 
     //use default host settings
     TM_Client::network.Init(false, TM_Client::host_address, TM_Client::port);
@@ -63,6 +65,7 @@ TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt)
     TM_Client::name_announced = false;
     TM_Client::done = false;
     TM_Client::auto_sync = autoSync;
+    TM_Client::abort_return = false;
 
     TM_Client::host_address = hostAddress;
     TM_Client::port = prt;
@@ -83,6 +86,32 @@ TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt, string
     TM_Client::name_announced = false;
     TM_Client::done = false;
     TM_Client::auto_sync = autoSync;
+    TM_Client::abort_return = false;
+
+    TM_Client::host_address = hostAddress;
+    TM_Client::port = prt;
+
+    //intialize network using user specified host settings
+    TM_Client::network.Init(false, TM_Client::host_address, TM_Client::port);
+
+    TM_Client::network.Connect();
+
+    //give TM_Share access to the network
+    TM_Share::Register_Network(&TM_Client::network);
+
+    TM_Client::Set_Client_Name(clientName);
+
+    TM_Client::Announce_Client_Name();
+//}}}
+}
+
+TM_Client::TM_Client(bool autoSync, string hostAddress, unsigned int prt, string clientName, bool abort_return) 
+{
+//{{{
+    TM_Client::name_announced = false;
+    TM_Client::done = false;
+    TM_Client::auto_sync = autoSync;
+    TM_Client::abort_return = abort_return;
 
     TM_Client::host_address = hostAddress;
     TM_Client::port = prt;
@@ -137,6 +166,11 @@ TM_Client::~TM_Client()
     
     TM_Client::network.Send("SHUTDOWN", 9);
 //}}}
+}
+
+void TM_Client::setAbortReturn(bool abrt_ret)
+{
+    TM_Client::abort_return = abrt_ret;
 }
 
 void TM_Client::Set_Client_Name(string clientName)
@@ -226,6 +260,7 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
 //{{{
     //local variable to keep loop going (should be move to transaction class)
     bool wasAborted = false;
+    void * ret_val;
 
     do
     {
@@ -233,10 +268,13 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
         try
         {
             //attempt the transaction
-            return transactions[tran_id].transaction(arg);
+            ret_val =  transactions[tran_id].transaction(arg);
 
             wasAborted = false;
             transactions[tran_id].backoff_time = 0;
+            transactions[tran_id].Increment_Commit_Count();
+
+            return ret_val;
         }
         catch(int error) //catch a conflict exception
         {
@@ -253,9 +291,13 @@ void* TM_Client::Execute_Transaction(int tran_id, void *arg)
                 transactions[tran_id].backoff_time += transactions[tran_id].backoff_increment;
                 usleep(transactions[tran_id].backoff_time);
             }
+
+            if(abort_return)
+                return NULL;
         }
     }
     while(wasAborted); //keep trying until it isn't aborted
+
 //}}}
 }
 
@@ -397,4 +439,24 @@ void TM_Client::StartNetwork()
         }
     }
 //}}}
+}
+
+int TM_Client::GetTotalAborts()
+{
+    int total = 0;
+    for(int i = 0; i < transactions.size(); i++)
+    {
+        total += transactions[i].Get_Abort_Count();
+    }
+    return total;
+}
+
+int TM_Client::GetTotalCommits()
+{
+    int total = 0;
+    for(int i = 0; i < transactions.size(); i++)
+    {
+        total += transactions[i].Get_Commit_Count();
+    }
+    return total;
 }

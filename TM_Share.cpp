@@ -8,6 +8,7 @@ using namespace std;
     //Static Var Define
     //------------------------
     NC_Client *TM_Share::network;
+    StoreType TM_Share::store_type;
     //mutex TM_Share:: queue_lock;
     //------------------------
 
@@ -21,6 +22,9 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value)
 
     this->mem_address = mem_address;
     this->mem_value = mem_value;
+
+    TM_Share::store_type = integer;
+
     #if DEBUG
     cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
     #endif
@@ -37,9 +41,53 @@ TM_Share::TM_Share(unsigned int mem_address, unsigned int mem_value, queue<TM_Me
 
     this->mem_address = mem_address;
     this->mem_value = mem_value;
+
+    TM_Share::store_type = integer;
+
     #if DEBUG
     cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
     #endif
+    //store pointer to the message queue
+    Register_MessageQueue(messages_ref);
+//}}}
+}
+
+TM_Share::TM_Share(unsigned int mem_address, float mem_value, bool float_type)
+{
+//{{{
+    this->auto_sync = true;
+
+    this->isWrite = false;
+    this->isRead = false;
+
+    this->mem_address = mem_address;
+    this->mem_value_fl = mem_value;
+    
+    TM_Share::store_type = float_real;
+
+    #if DEBUG
+    cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
+    #endif
+//}}}
+}
+
+TM_Share::TM_Share(unsigned int mem_address, float mem_value, queue<TM_Message> *messages_ref, bool float_type)
+{
+//{{{
+    this->auto_sync = true;
+
+    this->isWrite = false;
+    this->isRead = false;
+
+    this->mem_address = mem_address;
+    this->mem_value_fl = mem_value;
+
+    TM_Share::store_type = float_real;
+
+    #if DEBUG
+    cout<<"Memory at address "<<this->mem_address<<" registered with value "<< this->mem_value<<endl;
+    #endif
+
     //store pointer to the message queue
     Register_MessageQueue(messages_ref);
 //}}}
@@ -93,6 +141,54 @@ void TM_Share::ReceiveMessage(char *code, unsigned int *address, unsigned int *v
 //}}}
 }
 
+void TM_Share::SendMessage(char code, unsigned int address, float value)
+{
+ //{{{
+    char temp_buffer[1024];
+   
+    //clear data buffer
+    bzero(temp_buffer, sizeof(temp_buffer));
+
+    //get string version of data
+    int size = sprintf(temp_buffer, "%c:%u:%f", code, address, value);
+
+    TM_Share::network->Send(temp_buffer, size + 1);
+    #if DEBUG
+        cout<<"Sent :"<< temp_buffer<<" (done)"<<endl;
+    #endif
+//}}}
+}
+
+void TM_Share::ReceiveMessage(char *code, unsigned int *address, float *value)
+{
+//{{{
+    unsigned pos1, pos2;
+    string buffer;
+
+    //get a message from the server
+    TM_Share::network->Receive(&buffer,1024);
+
+    //find first colon
+    pos1 = buffer.find_first_of(":"); 
+
+    //get character before first colon as code
+    *code = buffer[pos1 - 1];
+
+    //replace colon so we can find the next one
+    buffer[pos1] = '-';
+
+    //find second colon
+    pos2 = buffer.find_first_of(":");
+
+    //get the address string and convert it to an integer
+    *address = (unsigned int)atoi(buffer.substr(pos1+1, pos2-1).c_str());
+
+    //get the value string and convert it to an integer
+    *value = (float)atof(buffer.substr(pos2+1, buffer.length() - 1).c_str());
+
+//}}}
+}
+
 void TM_Share::SendMessage(TM_Message message)
 {
 //{{{
@@ -108,7 +204,12 @@ void TM_Share::SendMessage(TM_Message message)
     #endif
 
     //get string version of data
-    int size = sprintf(this->out_buffer, "%c:%u:%u", message.code, message.address, message.value);
+    int size;
+
+    if(TM_Share::store_type == integer)
+       size = sprintf(this->out_buffer, "%c:%u:%u", message.code, message.address, message.value);
+    else if(TM_Share::store_type == float_real)
+       size = sprintf(this->out_buffer, "%c:%u:%f", message.code, message.address, message.value_fl);
 
     #if DEBUG
         cout<<"Messasge compiled as : "<<this->out_buffer<<"(DONE)"<<endl;
@@ -143,15 +244,33 @@ TM_Message TM_Share::ReceiveMessage()
     //get the address string and convert it to an integer
     in_message.address = (unsigned int)atoi(in_buffer.substr(pos1+1, pos2-1).c_str());
 
-    //get the value string and convert it to an integer
-    in_message.value = (unsigned int)atoi(in_buffer.substr(pos2+1, in_buffer.length() - 1).c_str());
-    #if DEBUG
-    //display values
-        cout<<hex<<"\tcode: "<<(unsigned int)in_message.code<<endl;
-        cout<<hex<<"\taddr: "<<in_message.address<<endl;
-        cout<<hex<<"\tvalue: "<<in_message.value<<endl;
-        cout<<endl;
-    #endif
+    if(TM_Share::store_type == integer)
+    {
+        //get the value string and convert it to an integer
+        in_message.value = (unsigned int)atoi(in_buffer.substr(pos2+1, in_buffer.length() - 1).c_str());
+
+        #if DEBUG
+        //display values
+            cout<<hex<<"\tcode: "<<(unsigned int)in_message.code<<endl;
+            cout<<hex<<"\taddr: "<<in_message.address<<endl;
+            cout<<hex<<"\tvalue: "<<in_message.value<<endl;
+            cout<<endl;
+        #endif
+    }
+    else if(TM_Share::store_type == float_real)
+    {
+        //get the value string and convert it to an integer
+        in_message.value_fl = (float)atof(in_buffer.substr(pos2+1, in_buffer.length() - 1).c_str());
+
+        #if DEBUG
+        //display values
+            cout<<hex<<"\tcode: "<<(unsigned int)in_message.code<<endl;
+            cout<<hex<<"\taddr: "<<in_message.address<<endl;
+            cout<<hex<<"\tvalue: "<<in_message.value_fl<<endl;
+            cout<<endl;
+        #endif
+    }
+
     return in_message;
 //}}}
 }
@@ -191,15 +310,32 @@ void TM_Share::Declare_Commit()
 //{{{
     char code = COMMIT;
     unsigned int address = 0;
-    unsigned int value = 0; //could make this a count or something else useful
 
-    TM_Share::SendMessage(code, address, value);
-
-    TM_Share::ReceiveMessage(&code, &address, &value);
-
-    if(code & ABORT)
+    if(TM_Share::store_type == integer)
     {
-        throw ABORT;
+        unsigned int value = 0; //could make this a count or something else useful
+
+        TM_Share::SendMessage(code, address, value);
+
+        TM_Share::ReceiveMessage(&code, &address, &value);
+
+        if(code & ABORT)
+        {
+            throw ABORT;
+        }
+    }
+    else if(TM_Share::store_type == float_real)
+    {
+        float value = 0.0;
+
+        TM_Share::SendMessage(code, address, value);
+
+        TM_Share::ReceiveMessage(&code, &address, &value);
+
+        if(code & ABORT)
+        {
+            throw ABORT;
+        }
     }
 //}}}
 }
@@ -209,18 +345,34 @@ void TM_Share::End_Commit()
 //{{{
     char code = COMMIT | CONTROL;
     unsigned int address = 0;
-    unsigned int value = 0; //could make this a count or something else useful
-
-    TM_Share::SendMessage(code, address, value);
-
-    TM_Share::ReceiveMessage(&code, &address, &value);
-
-    if(code & ABORT)
+    
+    if(TM_Share::store_type == integer)
     {
-        throw ABORT;
+        unsigned int value = 0; //could make this a count or something else useful
+
+        TM_Share::SendMessage(code, address, value);
+
+        TM_Share::ReceiveMessage(&code, &address, &value);
+
+        if(code & ABORT)
+        {
+            throw ABORT;
+        }
+    }
+    else if(TM_Share::store_type == float_real)
+    {
+        float value = 0.0; //could make this a count or something else useful
+
+        TM_Share::SendMessage(code, address, value);
+
+        TM_Share::ReceiveMessage(&code, &address, &value);
+
+        if(code & ABORT)
+        {
+            throw ABORT;
+        }
     }
 //}}}
-
 }
 
 void TM_Share::TM_Init()
@@ -231,21 +383,44 @@ void TM_Share::TM_Init()
     #endif
     out_message.code = INIT;
     out_message.address = mem_address;
-    out_message.value = 0;
 
-    TM_Share::SendMessage(out_message);
-
-    TM_Share::ReceiveMessage();
-
-    if(in_message.code & ABORT)
+    if(TM_Share::store_type == integer)
     {
-        this->isRead = false;
-        throw ABORT;
+        out_message.value = 0;
+
+        TM_Share::SendMessage(out_message);
+
+        TM_Share::ReceiveMessage();
+
+        if(in_message.code & ABORT)
+        {
+            this->isRead = false;
+            throw ABORT;
+        }
+        else
+        {
+            this->isRead = true;
+            mem_value = in_message.value;
+        }
     }
-    else
+    else if(TM_Share::store_type == float_real)
     {
-        this->isRead = true;
-        mem_value = in_message.value;
+        out_message.value_fl = 0.0;
+
+        TM_Share::SendMessage(out_message);
+
+        TM_Share::ReceiveMessage();
+
+        if(in_message.code & ABORT)
+        {
+            this->isRead = false;
+            throw ABORT;
+        }
+        else
+        {
+            this->isRead = true;
+            mem_value_fl = in_message.value_fl;
+        }
     }
 //}}}
 }
@@ -257,6 +432,7 @@ void TM_Share::TM_Read()
     out_message.code = READ;
     out_message.address = mem_address;
     out_message.value = 0;//mem_value;
+    out_message.value_fl = 0.0;
 
     //push it back for the network thread
    
@@ -279,6 +455,7 @@ void TM_Share::TM_Write()
     out_message.code = WRITE;                   //a write was made...
     out_message.address = mem_address;          //to this memory address...
     out_message.value = new_value;              //get speculative value
+    out_message.value_fl = new_value_fl;
 
     //push it back, oh yeah
     #if DEBUG
@@ -318,6 +495,7 @@ void TM_Share::TM_Sync()
 
     //value shouldn't matter
     out_message.value = 0;                  
+    out_message.value_fl = 0.0;
 
     #if DEBUG
         cout<<"Syncing address "<<out_message.address<<" with server..."<<endl;
@@ -342,6 +520,7 @@ void TM_Share::TM_Commit()
     {
         out_message.code = WRITE | COMMIT;                   //a write was made...
         out_message.value = new_value;              //get speculative value
+        out_message.value_fl = new_value_fl;
         
         #if DEBUG   
             cout<<"Commiting the changes to address "<<this->mem_address<<endl;
@@ -349,8 +528,9 @@ void TM_Share::TM_Commit()
     }
     else if(this->isRead)
     {
-        out_message.code = READ | COMMIT;                   //a write was made...
+        out_message.code = READ | COMMIT;                   
         out_message.value = mem_value;
+        out_message.value_fl = mem_value_fl;
         
         #if DEBUG
             cout<<"Commiting the read finish to address "<<this->mem_address<<endl;
@@ -397,13 +577,43 @@ TM_Share & TM_Share::operator=(TM_Share &tm_source)
 
 int  TM_Share::toInt()
 {
-
+//{{{
     TM_Read();
 
     if(isWrite)
        return new_value;
     else
        return mem_value;
+//}}}
+}
+
+float TM_Share::toFloat()
+{
+//{{{
+    TM_Read();
+
+    if(isWrite)
+       return new_value_fl;
+    else
+       return mem_value_fl;
+//}}}
+}
+
+TM_Share & TM_Share::operator+(TM_Share &tm_source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value = tm_source.mem_value;
+
+    //notify TM server of write
+    this->TM_Write();
+
+    //notify TM server of read
+    tm_source.TM_Read();
+
+    return *this;
+//}}}
 }
 
 //OVERLOAD: TM_Share = int
@@ -436,29 +646,12 @@ TM_Share & TM_Share::operator=(const unsigned int source)
 //}}}
 }
 
-TM_Share & TM_Share::operator+(TM_Share &tm_source)
-{
-//{{{
-    this->isWrite = true;
-
-    this->new_value = tm_source.mem_value;
-
-    //notify TM server of write
-    this->TM_Write();
-
-    //notify TM server of read
-    tm_source.TM_Read();
-
-    return *this;
-//}}}
-}
-
 TM_Share & TM_Share::operator+(const int source)
 {
 //{{{
     this->isWrite = true;
 
-    this->new_value = (unsigned int) source;
+    this->new_value += (unsigned int) source;
 
     //notofy TM server of write
     this->TM_Write();
@@ -466,6 +659,43 @@ TM_Share & TM_Share::operator+(const int source)
     return *this;
 //}}}
 }
+
+void TM_Share::setFloat(float val)
+{
+    this->isWrite = true;
+
+    this->new_value_fl += val;
+
+    this->TM_Write();
+}
+
+//TM_Share & TM_Share::operator=(const float source)
+//{
+////{{{
+//    this->isWrite = true;
+//
+//    this->new_value_fl = source;
+//
+//    //notofy TM server of write
+//    this->TM_Write();
+//
+//    return *this;
+////}}}
+//}
+//
+//TM_Share & TM_Share::operator+(const float source)
+//{
+////{{{
+//    this->isWrite = true;
+//
+//    this->new_value_fl += source;
+//
+//    //notofy TM server of write
+//    this->TM_Write();
+//
+//    return *this;
+////}}}
+//}
 
 //OVERLOAD: <<TM_Share<< (used with cout primarily)
 ostream& operator<<(ostream &out, TM_Share &tm_share)

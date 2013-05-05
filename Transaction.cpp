@@ -13,11 +13,21 @@ int Transaction::Get_Abort_Count()
     return this->abort_count;
 }
 
+int Transaction::Get_Commit_Count()
+{
+    return this->commit_count;
+}
+
 void Transaction::Increment_Abort_Count()
 {
     this->abort_count += 1;
 }
 
+void Transaction::Increment_Commit_Count()
+{
+    printf("incrementing commit count!\n");
+    this->commit_count += 1;
+}
 
 void Transaction::Reset_Abort_Count()
 {

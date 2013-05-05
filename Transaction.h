@@ -7,6 +7,7 @@ class Transaction
 {
     private:
         int abort_count = 0;
+        int commit_count = 0;
 
     public:
         int backoff_increment = 0, backoff_time = 0;
@@ -24,7 +25,11 @@ class Transaction
         Transaction(void *(*transaction)(void *), std::string name);
 
         int Get_Abort_Count();
+        int Get_Commit_Count();
         void Increment_Abort_Count();
+        void Increment_Commit_Count();
+        int getTotalAborts();
+        int getTotalCommits();
         void Reset_Abort_Count();
 
         void SetTransaction(void *(*transaction)(void *), std::string name);
