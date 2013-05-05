@@ -63,12 +63,12 @@ int main(int argc, char *argv[])
     cout<<"name set:"<<cmdInput.transaction<<endl;
 
     //ARGS: auto sync on, address of server, port 1337
-    TM_Client tm_client(true, cmdInput.ipAddress, 1337,cmdInput.coreName );
+    TM_Client::Init(true, cmdInput.ipAddress, 1337,cmdInput.coreName );
     
     if(cmdInput.transaction == "test")
     {
         //store transaction for later execution, get id in return
-        t_id = tm_client.Register_Transaction(reader, "reader", cmdInput.backoff_delta);
+        t_id = TM_Client::Register_Transaction(reader, "reader", cmdInput.backoff_delta);
     }
     else if(cmdInput.transaction == "increment")
     {
