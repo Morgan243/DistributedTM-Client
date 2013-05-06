@@ -176,7 +176,6 @@ void TM_Client::setAbortReturn(bool abrt_ret)
 void TM_Client::Set_Client_Name(string clientName)
 {
     TM_Client::client_name = clientName;
-
 }
 
 void TM_Client::Announce_Client_Name()

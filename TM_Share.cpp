@@ -660,29 +660,185 @@ TM_Share & TM_Share::operator+(const int source)
 //}}}
 }
 
+TM_Share & TM_Share::operator+(const unsigned int source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value += (unsigned int) source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator-(const int source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value -= (unsigned int) source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator-(const unsigned int source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value -= (unsigned int) source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator*(const int source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value *= (unsigned int) source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator*(const unsigned int source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value *= (unsigned int) source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator/(const int source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value /= (unsigned int) source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator/(const unsigned int source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value /= (unsigned int) source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
 void TM_Share::setFloat(float val)
 {
     this->isWrite = true;
 
-    this->new_value_fl += val;
+    //this->new_value_fl += val;
+    this->new_value_fl = val;
 
     this->TM_Write();
 }
 
-//TM_Share & TM_Share::operator=(const float source)
-//{
-////{{{
-//    this->isWrite = true;
-//
-//    this->new_value_fl = source;
-//
-//    //notofy TM server of write
-//    this->TM_Write();
-//
-//    return *this;
-////}}}
-//}
-//
+TM_Share & TM_Share::operator=(const float source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value_fl = source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+
+
+TM_Share & TM_Share::operator+(const float source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value_fl += source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator-(const float source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value_fl -= source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator*(const float source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value_fl *= source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
+
+TM_Share & TM_Share::operator/(const float source)
+{
+//{{{
+    this->isWrite = true;
+
+    this->new_value_fl /= source;
+
+    //notofy TM server of write
+    this->TM_Write();
+
+    return *this;
+//}}}
+}
 //TM_Share & TM_Share::operator+(const float source)
 //{
 ////{{{

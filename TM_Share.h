@@ -111,8 +111,21 @@ class TM_Share
         TM_Share & operator=(const int source);
         TM_Share & operator=(const unsigned int source);
         TM_Share & operator+(const int source);
+        TM_Share & operator+(const unsigned int source);
+        TM_Share & operator-(const int source);
+        TM_Share & operator-(const unsigned int source);
+        TM_Share & operator*(const int source);
+        TM_Share & operator*(const unsigned int source);
+        TM_Share & operator/(const int source);
+        TM_Share & operator/(const unsigned int source);
         
         void setFloat(float val);
+        TM_Share & operator=(const float source);
+        TM_Share & operator+(const float source);
+        TM_Share & operator-(const float source);
+        TM_Share & operator*(const float source);
+        TM_Share & operator/(const float source);
+
         friend std::ostream & operator<<(std::ostream &out, TM_Share &tm_share);
 };
 #endif

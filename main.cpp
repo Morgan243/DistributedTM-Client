@@ -93,28 +93,28 @@ int main(int argc, char *argv[])
     }
     else if(cmdInput.transaction == "increment")
     {
-        t_id = tm_client.Register_Transaction(incrementer, "increment", cmdInput.backoff_delta);
+        t_id = TM_Client::Register_Transaction(incrementer, "increment", cmdInput.backoff_delta);
     }
     else if(cmdInput.transaction == "increment_fl")
     {
-        t_id = tm_client.Register_Transaction(incrementer_fl, "increment_fl", cmdInput.backoff_delta);
+        t_id = TM_Client::Register_Transaction(incrementer_fl, "increment_fl", cmdInput.backoff_delta);
     }
     else if(cmdInput.transaction == "reader_fl")
     {
-        t_id = tm_client.Register_Transaction(reader_fl, "reader_fl", cmdInput.backoff_delta);
+        t_id = TM_Client::Register_Transaction(reader_fl, "reader_fl", cmdInput.backoff_delta);
     }
     else if (cmdInput.transaction == "stall")
     {
-       t_id = tm_client.Register_Transaction(stall, "stall", cmdInput.backoff_delta); 
+       t_id = TM_Client::Register_Transaction(stall, "stall", cmdInput.backoff_delta); 
     }
     else if(cmdInput.transaction == "stall-write")
     {
-        t_id = tm_client.Register_Transaction(stall_write, "stall-write", cmdInput.backoff_delta);
+        t_id = TM_Client::Register_Transaction(stall_write, "stall-write", cmdInput.backoff_delta);
     }
     else if(cmdInput.transaction == "fourier")
     {
-        t_id = tm_client.Register_Transaction(fourier, "fourier", cmdInput.backoff_delta);
-        t_id2 = tm_client.Register_Transaction(fourier_index, "fourier_index", cmdInput.backoff_delta);
+        t_id = TM_Client::Register_Transaction(fourier, "fourier", cmdInput.backoff_delta);
+        t_id2 = TM_Client::Register_Transaction(fourier_index, "fourier_index", cmdInput.backoff_delta);
         TM_Client::setAbortReturn(true);
     }
 
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 
 
     //register shared memory for use in transaction
-    tm_client.Add_Shared_Memory(t_id, shared_memory);
+    TM_Client::Add_Shared_Memory(t_id, shared_memory);
 
 
     for(int i = 0; i < cmdInput.rerun; i++)
@@ -145,24 +145,24 @@ int main(int argc, char *argv[])
 
         if((user_in == "y" || cmdInput.auto_proceed) && cmdInput.transaction == "fourier")
         {
-            tm_client.Add_Shared_Memory(t_id2, shared_memory);
+            TM_Client::Add_Shared_Memory(t_id2, shared_memory);
 
             while(t_args.iterations_index < 5)
             {
                 //cout<<"index: "<<t_args.current_index<<", iteration index: "<<t_args.iterations_index<<", time: "<<t_args.time<<endl;
                 //get an index and iteration index
-                tm_client.Execute_Transaction(t_id2, args);
+                TM_Client::Execute_Transaction(t_id2, args);
 
                 //set iterations
                 t_args.iterations = cmdInput.fourier_iters[t_args.iterations_index];
 
-                tm_client.Execute_Transaction(t_id, args);
+                TM_Client::Execute_Transaction(t_id, args);
             }
         }
         else if(user_in == "y" || cmdInput.auto_proceed)
         {
             for(t_args.index = 0; t_args.index < cmdInput.memSize; t_args.index++)
-                tm_client.Execute_Transaction(t_id, args);
+                TM_Client::Execute_Transaction(t_id, args);
         }
     }
 

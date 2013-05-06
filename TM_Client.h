@@ -37,12 +37,12 @@ class TM_Client
         TM_Client(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName, bool abort_return);
         ~TM_Client();
 
-        void Init(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName);
+        static void Init(bool autoSync, std::string hostAddress, unsigned int prt, std::string clientName);
 
         static void setAbortReturn(bool abrt_ret);
 
-        void Set_Client_Name(std::string clientName);
-        void Announce_Client_Name();
+        static void Set_Client_Name(std::string clientName);
+        static void Announce_Client_Name();
 
         //load a function as a transaction, should be: 'void* my_func(void *args)'
         //returns the transaction id (vector index)
